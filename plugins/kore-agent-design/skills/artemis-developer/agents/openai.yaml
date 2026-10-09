@@ -1,0 +1,6 @@
+interface:
+  display_name: "Artemis Developer"
+  short_description: "Build Kore.ai agents one validated use case at a time"
+  default_prompt: "Use $artemis-developer to turn this design into a working agent, starting with a concise architecture brief for confirmation."
+policy:
+  allow_implicit_invocation: true

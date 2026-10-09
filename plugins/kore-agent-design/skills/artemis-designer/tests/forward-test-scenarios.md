@@ -1,4 +1,4 @@
-# Kore Agent Designer forward-test scenarios
+# Artemis Designer forward-test scenarios
 
 Run substantial revisions in a clean task with the repository-source or freshly installed skill. Judge observable decisions and generated artifacts, not exact wording.
 
@@ -6,7 +6,7 @@ Run substantial revisions in a clean task with the repository-source or freshly 
 
 Prompt:
 
-> Use `$kore-agent-designer` to help me design an authenticated employee HR policy assistant. I have only the idea so far.
+> Use `$artemis-designer` to help me design an authenticated employee HR policy assistant. I have only the idea so far.
 
 Expected behavior:
 
@@ -21,7 +21,7 @@ Expected behavior:
 
 Prompt:
 
-> Use `$kore-agent-designer` to turn this discovery package into a design. It contains agreed foundation scope, Value/Speed/Readiness scores, one selected Phase 1 use case, later phases, and a 30-working-day target. Write to the supplied output folder.
+> Use `$artemis-designer` to turn this discovery package into a design. It contains agreed foundation scope, Value/Speed/Readiness scores, one selected Phase 1 use case, later phases, and a 30-working-day target. Write to the supplied output folder.
 
 Expected behavior:
 
@@ -35,7 +35,7 @@ Expected behavior:
 
 Prompt:
 
-> Use `$kore-agent-designer` on this large requirements package with six use cases, voice and web, and several integrations.
+> Use `$artemis-designer` on this large requirements package with six use cases, voice and web, and several integrations.
 
 Expected behavior:
 

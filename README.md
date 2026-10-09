@@ -21,13 +21,21 @@ Installs `$xo-bot-decomposer`, which analyzes a Kore.ai XO bot-definition JSON, 
 
 The skill processes supplied files locally, redacts likely credential values from generated evidence, and does not estimate implementation effort.
 
-### Kore Agent Design
+### Artemis
 
-Installs `$kore-agent-designer`, which helps users create or review governed, modular enterprise designs for conversational, process, or hybrid Kore.ai agents. It turns discovery material or an initial idea into linked agent-definition, use-case, experience, and technical documents; maintains wave scope and traceability through a central index; and assesses implementation readiness. It asks for relevant evidence, recommends reviewable experience choices, and supports concise confirmation while keeping unverified scope provisional. Voice guidance addresses listener-appropriate accent, pace, pronunciation, recovery, and accessibility without prescribing a provider. After an explicit implementation request, it can use available Arch/Kore Agent Platform tools for the approved setup scope; connected tools are optional for design and review.
+Installs three skills: `$artemis-designer` creates and reviews governed functional, experience and technical designs; `$artemis-developer` implements or repairs Agent Platform projects; `$artemis-reviewer` reviews built agents against their design through experience and performance specialists. Designer preserves wave scope and traceability; Developer reuses that design and confirms a concise architecture before building one complete use case at a time.
+
+Developer prefers supported native ABL logic and HTTP/API tools, uses Code Tools only for justified exceptions, and balances useful response time with conversational quality. It includes self-contained implementation references, a diagram-based architecture brief, bounded delegation and checkpoint/resume guidance, plus a read-only Python 3.10+ snapshot helper. Live changes and tests use the user's available authorized Arch/platform tools; offline preparation remains possible with evidence gaps disclosed. Deployment and sharing require explicit authorization.
+
+Version `0.7.0` brings the three-skill **Artemis** bundle while preserving the plugin ID `kore-agent-design`. **Artemis Designer** replaces the skill name `kore-agent-designer`; use `$artemis-designer` and update helper paths to `skills/artemis-designer/`. Refresh the installed plugin after release to discover the renamed Designer and new Developer/Reviewer.
+
+All three support plain-language goals and carry context across scoped handoffs. Run each skill's tests using `python3 -m unittest discover -s plugins/kore-agent-design/skills/<skill-name>/tests -v`. Source tests and offline scenarios do not certify installed discovery or a live project/channel.
+
+Reviewer accepts supplied or inferred designs, preserves source snapshots and run history, and coordinates up to two specialist subagents with shared conversation/turn/time limits. It distinguishes actual voice/chat evidence from debug output, links findings to source and traces, and hands authorized repairs to Developer for bounded independent retesting. Defaults of 3 seconds for visible chat response and 2 seconds for audible voice response are configurable review targets. Its read-only Python 3.10+ metrics helper keeps missing/time-out observations and debug measurements distinct. Offline review and sequential fallback remain useful when connections or subagents are unavailable. This public implementation has no dependency on a separate report skill or organization-only services; when duplicate skill names are installed, select Reviewer from the `kore-agent-design` bundle.
 
 ### Arch Agent Platform Tools
 
-The `arch-agent-platform` plugin exposes the published [Arch MCP toolkit](https://www.npmjs.com/package/@koreai/arch-mcp-tools) for agent development, evaluation, and diagnostics. It provides MCP tools, not a standalone skill, and can support the optional implementation handoff from Kore Agent Design.
+The `arch-agent-platform` plugin exposes the published [Arch MCP toolkit](https://www.npmjs.com/package/@koreai/arch-mcp-tools) for agent development, evaluation, and diagnostics. It provides MCP tools, not a standalone skill, and can support the optional implementation handoff from Artemis.
 
 Requires Node.js with `npx`, network access to the npm registry, and access to the Agent Platform environment you intend to use. Follow the toolkit's connection guidance using your own authorized account; no credentials or default environment are bundled. Select the target environment explicitly before platform work.
 
@@ -40,7 +48,7 @@ The server launches `npx -y @koreai/arch-mcp-tools@latest`. The toolkit version 
 From a terminal with Codex installed, add the Kore Skills marketplace directly from GitHub:
 
 ```bash
-codex plugin marketplace add Koredotcom/kore-codex-plugins --ref main
+codex plugin marketplace add Koredotcom/kore-skills --ref main
 ```
 
 ### 2. Browse available plugins

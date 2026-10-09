@@ -1,0 +1,17 @@
+{
+  "snapshot_id": "sample-v1",
+  "evidence_channel": "debug_text",
+  "sessions": [
+    {"id": "s1", "turns": [
+      {"turn": 1, "user": "Reserve a projector on November 12 at East desk", "assistant": "Please confirm: projector, November 12, East desk."},
+      {"turn": 2, "user": "Actually November 13", "assistant": "Reserved projector for November 13 at East desk, reference DEMO-101."}
+    ]},
+    {"id": "s2", "turns": [
+      {"turn": 1, "user": "Reserve a camera on November 14 at West desk", "assistant": "Please confirm: camera, November 14, West desk."},
+      {"turn": 2, "user": "Cancel", "assistant": "Cancelled. Nothing was reserved."}
+    ]},
+    {"id": "s3", "turns": [
+      {"turn": 1, "user": "Is a microphone available on November 15 at East desk?", "assistant": "That microphone is unavailable. Would you like to check another item?"}
+    ]}
+  ]
+}

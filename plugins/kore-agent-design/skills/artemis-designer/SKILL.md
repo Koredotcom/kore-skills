@@ -1,9 +1,9 @@
 ---
-name: kore-agent-designer
+name: artemis-designer
 description: Guide a Kore.ai agent from discovery material or an initial idea to a governed, modular enterprise design package. Use for guided discovery, drafting, updating, design review, gap analysis, wave readiness, or an implementation handoff. Do not estimate effort. Create or modify a Kore.ai project only after an explicit implementation request using available platform tools.
 ---
 
-# Kore Agent Designer
+# Artemis Designer
 
 Create or review an enterprise design package for a conversational, process, or hybrid Kore.ai agent. The package keeps business behavior, channel experience, and technical decisions in focused Markdown files governed by one design index.
 
@@ -128,7 +128,7 @@ Review facts across the complete package rather than treating a missing heading 
 Run the advisory package checker after creating or updating a modular package:
 
 ```bash
-python3 "${PLUGIN_ROOT}/skills/kore-agent-designer/scripts/check_design_structure.py" \
+python3 "${PLUGIN_ROOT}/skills/artemis-designer/scripts/check_design_structure.py" \
   --package "<agent-slug>-design"
 ```
 
@@ -140,10 +140,6 @@ When the readiness verdict permits setup, provide the approved Wave 1 scope, tar
 
 Platform mutation requires an explicit implementation request. After authorization:
 
-1. Confirm the target environment or workspace, project identity, and first approved implementation slice.
-2. Discover the available platform project-builder contract before modifying resources.
-3. Resolve assumptions that block the slice and build only the approved scope.
-4. Verify operations with unknown outcomes before retrying and read back created resources where supported.
-5. Report implemented scope, remaining gaps, and anything the available tools could not create or verify.
+Read the bundled [Artemis Developer skill](../artemis-developer/SKILL.md) and continue there with the existing working folder, design/index, approved scope, target facts, acceptance criteria, open decisions and authorization. Developer owns the concise architecture confirmation, incremental construction and evidence-based validation. Reuse explicit approval of the same concrete architecture; do not make users manually invoke the next skill or repeat setup.
 
-If project-building tools are unavailable, provide the handoff without claiming platform work occurred.
+If Developer is unavailable, provide the bounded implementation handoff and identify the missing capability. If platform tools are unavailable, Developer can prepare offline artifacts with explicit limits; neither skill should claim platform changes occurred. Design-only requests end with design/readiness outputs.
