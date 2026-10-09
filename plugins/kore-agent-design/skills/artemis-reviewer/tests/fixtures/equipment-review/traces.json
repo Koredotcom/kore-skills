@@ -1,0 +1,22 @@
+{
+  "snapshot_id": "sample-v1",
+  "clock": "relative server milliseconds from user input received; no client delivery timing",
+  "turns": [
+    {"session_id": "s1", "turn": 1, "response_end_ms": 4800, "spans": [
+      {"name": "lookup_availability", "start_ms": 200, "end_ms": 2200, "input": {"item": "projector", "date": "November 12", "location": "East desk"}, "output": {"available": true}},
+      {"name": "lookup_availability", "start_ms": 2300, "end_ms": 4300, "input": {"item": "projector", "date": "November 12", "location": "East desk"}, "output": {"available": true}}
+    ]},
+    {"session_id": "s1", "turn": 2, "response_end_ms": 700, "spans": [
+      {"name": "reserve", "start_ms": 100, "end_ms": 500, "input": {"item": "projector", "date": "November 13", "location": "East desk"}, "output": {"status": "success", "reference": "DEMO-101"}}
+    ]},
+    {"session_id": "s2", "turn": 1, "response_end_ms": 1900, "spans": [
+      {"name": "lookup_availability", "start_ms": 100, "end_ms": 800, "input": {"item": "camera", "date": "November 14", "location": "West desk"}, "output": {"available": true}},
+      {"name": "lookup_availability", "start_ms": 900, "end_ms": 1600, "input": {"item": "camera", "date": "November 14", "location": "West desk"}, "output": {"available": true}}
+    ]},
+    {"session_id": "s2", "turn": 2, "response_end_ms": 120, "spans": []},
+    {"session_id": "s3", "turn": 1, "response_end_ms": 1500, "spans": [
+      {"name": "lookup_availability", "start_ms": 100, "end_ms": 650, "input": {"item": "microphone", "date": "November 15", "location": "East desk"}, "output": {"available": false}},
+      {"name": "lookup_availability", "start_ms": 700, "end_ms": 1250, "input": {"item": "microphone", "date": "November 15", "location": "East desk"}, "output": {"available": false}}
+    ]}
+  ]
+}

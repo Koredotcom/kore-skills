@@ -1,137 +1,72 @@
 ---
 name: xo-bot-decomposer
-description: Analyze Kore.ai XO bot-definition JSON or ZIP exports and produce a business goal decomposition plus a technical reference. Use for understanding dialogs, flows, integrations, entities, scripts, forms, channels, or version-shaped export structure. Do not estimate effort, cost, or implementation scope.
+description: Analyze Kore.ai XO bot exports and supplied companion code into business goals, technical references and explicit coverage gaps. Use for single-bot or universal/child-bot flows, events, integrations, SDK webhooks, BotKit and helper dependencies. Do not estimate effort or implement a replacement.
 ---
 
 # XO Bot Decomposer
 
-Turn a Kore.ai XO bot export into two evidence-based documents:
+Produce two evidence-based documents, `<bot_slug>_analysis.md` and `<bot_slug>_technical_reference.md`, plus a sanitized dependency/coverage register. For universal systems, also produce child reports and `<system_slug>_system_review.md` reconciling the selected end-to-end journeys. Source discovery, semantic document coverage, implementation closure, source-release alignment and runtime validation are separate results. A useful partial report must retain unresolved dependencies prominently.
 
-1. `<bot-slug>_analysis.md` — user goals, business-level steps, events, channels, forms, and PII configuration.
-2. `<bot-slug>_technical_reference.md` — integrations, entity definitions, environment references, and script-node evidence.
+## Protect inputs and preserve scope
 
-This skill documents what is present in the supplied export. It does not estimate migration or implementation effort, prescribe a delivery process, or require a connected Kore.ai environment.
+Use only supplied or authorized artifacts. Keep originals unchanged and generated evidence outside the plugin/source directories. Never execute supplied applications, install their dependencies, fetch vendor scripts or call integrations to infer behavior. Syntax checks, if requested, do not establish behavior. Do not commit exports or generated reports.
 
-## Protect the supplied export
+Redaction covers common credentials in JSON, config, helper/hook code, scripts and URLs, including fields marked `isSecured=false`. It is not a privacy guarantee. Inspect all deliverables for credentials and identifying examples; preserve credential references and source identities while masking literal values. Record original and sanitized hashes separately. Never restore redacted values. Unsupported artifacts remain in the manifest and are not copied into outputs.
 
-Treat every export and generated artifact as potentially sensitive. Work only with files the user supplied or authorized. Do not commit them or copy them into the plugin repository. Upload only the completed documents when the user authorizes the optional storage handoff below; never include the source export or intermediate evidence.
+Accept an export JSON, ZIP, extracted folder, or explicitly selected set of exports. Accept optional companion JavaScript/configuration, BotKit source, deployment descriptions and provider contracts. A directly selected JSON authorizes that file; select its enclosing export folder/ZIP or pass companion files explicitly to include siblings. Discover candidate dependencies within the authorized source boundary; do not automatically analyze unrelated domains or expand migration scope. A needed task found in another child closes availability only, not dispatch ownership or state compatibility.
 
-The bundled parser redacts likely credential values in service headers, request bodies, URLs, and scripts. Redaction is a safety layer, not a guarantee: inspect generated files before sharing them and describe authentication through header names, profile identifiers, or environment-variable references rather than resolved secrets.
+Use an explicit destination without asking again. Otherwise create fresh temporary evidence and save final documents in the current working directory unless that would be ambiguous or overwrite user files. Ask only for material missing inputs or decisions; continue independent work. If unavailable or deferred, finish partial reports with the gap intact. Silence is not an approved exclusion.
 
-## Select the input and destination
-
-Accept a `.json` definition, `.zip` archive, extracted export directory, or pasted JSON saved to a temporary file.
-
-- If the input is unambiguous, begin without asking the user to restate it.
-- If several plausible exports exist, ask the user to select one.
-- Use an explicit local destination without asking again, and create it when requested. Otherwise use a fresh temporary directory for evidence and save final documents in the current working directory. Ask only when the destination is ambiguous or unavailable. Handle a cloud-storage destination through the optional handoff after local generation.
-- Never write generated analysis into a source fixture, read-only directory, or the plugin installation.
-
-The parser recognizes common single-definition export shapes. `botDefinition.json`, earlier-version labels, and ambiguous version metadata use the XO 10-compatible route; `appDefinition.json` or an explicit version of 11 or later uses the XO 11 route. Treat this as parser routing, not proof that every export from a product release has an identical schema.
-
-## Document scope notice
-
-Place this notice immediately below the title in both the business goal decomposition and technical reference, before source metadata:
-
-> **Scope disclaimer:** SearchAI, SmartAssist start flows, and Agent Assist configurations are not included in the bot export and are therefore not represented in this document.
-
-## Generate deterministic evidence
-
-Run the bundled entry point once for mechanical extraction:
+## Generate mechanical evidence
 
 ```bash
 python3 "${PLUGIN_ROOT}/skills/xo-bot-decomposer/scripts/decompose_bot.py" \
   "<export.zip-or-json-or-folder>" "<fresh-output-directory>"
 ```
 
-During repository-source testing, when `PLUGIN_ROOT` is unset, resolve `scripts/decompose_bot.py` relative to this `SKILL.md`.
+When testing source with `PLUGIN_ROOT` unset, resolve scripts relative to this file. Python 3.10+ is sufficient; no third-party runtime packages are required. Read [references/evidence-schema.md](references/evidence-schema.md) for arguments, supported shapes, schema migration, statuses and helper limitations.
 
-When the user explicitly identifies the export version, pass `--xo-version <major-version>`. The command safely extracts ZIPs and produces:
+- Repeat `--additional-export`, `--botkit`, `--companion-source` and `--contracts` for selected inputs. Pass `--defer <dependency>` for unavailable inputs already identified.
+- Multiple plausible definitions produce an explicit selection gap. Inspect `_artifact_manifest.json`, then rerun to a fresh output with repeated `--definition <exact-artifact-id>` or explicit `--all-definitions`. Do not choose the largest definition silently.
+- Explicit version metadata or `--xo-version` selects the route; XO 10 includes earlier releases, XO 11 is a compatible parsing route, not a guarantee about later schemas. Preserve product version, parser route and companion release identity separately.
+- `--scope goals-only` still discovers all structural dependencies and quantifies excluded support detail. `--universal --parent-id <known-id>` creates a coordinated analysis plan; omit parent ID when unknown. Enable universal analysis whenever architecture, registry or routing evidence establishes an umbrella system, even without a standalone parent export.
 
-- `_inventory.json` — structured dialogs, nodes, transitions, services, entities, scripts, forms, environment references, and sub-dialog calls;
-- `_inventory.md` — compact counts and coverage;
-- `_index.md` — dialogs retained for semantic analysis;
-- `_metadata.md` — languages, channels, PII settings, and form summary;
-- `_all_dialogs.md` and per-dialog Markdown files — readable flow evidence.
+Read `_coverage.md`, `_artifact_manifest.json`, `_inventory.md`, `_index.md` and `_metadata.md` first. Multi-export runs keep per-export evidence in `bot_###/`. Use `_coverage.json` for cross-source records and `_inventory.json` for legacy service/entity/script/form collections plus recursive occurrences. The generated `*_draft.md` files are boundary scaffolds, not completed semantic reports.
 
-If the parser reports an unsupported shape, preserve the error and inspect only enough source structure to identify whether the export is incomplete or a distinct variant. Use a targeted read-only fallback when reliable; state all coverage limitations.
+## Analyze behavior and close only supported gaps
 
-## Build the business goal decomposition
+Read [references/implementation-analysis.md](references/implementation-analysis.md) when executable companions, hooks, event logic or routing dependencies occur. The scanner uses bounded lexical analysis, not a JavaScript AST. Names, registrations and calls are candidates, not proof of execution. Inspect actual bootstrap, imports, guards, dispatcher and reachable project helpers before classifying a hook as active or matching a webhook. Unsupported variants remain explicit gaps.
 
-Read `_inventory.md`, `_index.md`, and `_metadata.md` first. Use `_inventory.json` for exact facts. Read individual dialog files for semantic interpretation and raw JSON only to resolve a specific gap.
+Account for every artifact, component, recursive node occurrence, dialog, event, helper and hook in `review_items`. Analyze known types and preserve unsupported/null/cyclic references. Keep node IDs, component IDs, parent chains, original pointers and expanded use sites. A shared component is one definition with many occurrences. Preserve raw conditions and boolean nesting; do not invent missing operators or collapse duplicate display names.
 
-A dialog can contain more than one user goal when branches lead to materially different business outcomes. Conversely, a called sub-dialog is normally part of its parent goal:
+Classify lifecycle/support behavior separately from user goals, but retain its technical implementation. Event-driven identity, initialization, fallback, hidden recovery and transfer can be the principal capability of a bot. Read event configuration, enabled state and target IDs; names and missing incoming edges are only clues. Zero native transfer nodes does not mean no scripted, VXML or external handoff.
 
-- Inline a sub-dialog used by only one parent.
-- Document a sub-dialog used by multiple parents once under `Shared Sub-Flows` and reference it from each parent.
-- Reference a called dialog as another goal only when it is independently user-invokable and has its own business outcome.
-- Separate lifecycle behavior such as welcome, fallback, follow-up, and default transfer from user goals.
+A dialog may contain multiple business outcomes. Inline a sub-dialog with one parent; describe shared sub-flows once with every caller. Treat it as a separate goal only when independently invokable with its own outcome. Name goals with plain verb–noun phrases. Keep business steps free of URLs, payloads, code and platform identifiers; express decisions, validation, actions, errors and escalation from evidence.
 
-Name goals as plain-language verb–noun outcomes. Write numbered steps from the agent's perspective and include collection, validation, decisions, service actions, confirmations, failures, and escalation when supported by evidence. Keep HTTP methods, URLs, payloads, code, internal identifiers, and raw configuration out of this document.
+For 50+ candidates, ask which goals need expanded prose after the summary. Structural discovery, event/helper/hook inventory, dependency reconciliation and early warnings still cover the whole selected source set.
 
-For exports with 50 or more candidate dialogs, produce the summary table first and ask which goals the user wants expanded before generating every detailed flow.
+## Universal system coordination
 
-Before writing either document, read [references/output-detail.md](references/output-detail.md) for the required metadata, per-goal detail, technical sections, and coverage checks. Use this business-document shape:
+Before child passes, read [references/universal-analysis.md](references/universal-analysis.md). Refine `_system_plan.json` with selected capabilities, identities/hashes, versions, shared responsibilities, deferred inputs and output ownership. Use independent child and shared-runtime subagents when available and permitted by active instructions; otherwise perform equivalent sequential passes. Respect concurrency limits and give each worker a separate output directory. One owner controls shared tooling.
 
-```markdown
-# Bot Goal Decomposition: <Bot Name>
+Require structured handoffs using the linked schema. Reconcile them with `scripts/reconcile_system.py`, then perform a separate coordinator analysis of dispatch ownership, shared state, initializer ordering, overlaps, errors, interruption/resumption and terminal/return paths. A mechanical merge or successful child report is not universal completion. Trace selected journeys and report child, shared-runtime and end-to-end coverage separately.
 
-**Source:** <export and parser route>
-**Analyzed:** <date>
-**Total goals identified:** <count>
+## Write and validate reports
 
-## Summary
-| # | Goal | Source dialog(s) |
-|---|---|---|
+Read [references/output-detail.md](references/output-detail.md) before authoring. Put **Coverage and missing inputs** immediately below each title, before metadata, counts or goal tables. Generate the same warning from the current `_coverage.json` for business, technical and system reports. It states inspected artifacts, requested boundary, statuses, affected behavior, practical consequence, next evidence and ledger link. Keep deferred, excluded, unsupported, ownership-mismatched and runtime-unknown items visible. Describe SearchAI/SmartAssist/Agent Assist according to supplied evidence: absent, referenced without implementation, uninspected or intentionally excluded; never use an unconditional export disclaimer.
 
-## Events
-<system-triggered or lifecycle behavior>
+Update each review item's disposition, specific reason and document references. Resolve a gap only with `resolution_evidence` and an appended `resolution_history`; finding a client/helper does not close provider/runtime questions. Record semantic additions (e.g. exact dispatcher matches, missing reset paths or state-key mismatches) in the same ledger. Do not change counts to hide unknown categories.
 
-## Languages and Channels
-<configured evidence or “No channel configuration found in export.”>
-
-## Digital Forms
-<forms and associated goals, or “No digital forms found.”>
-
-## PII Redaction
-<configured evidence, or state that no configuration was found>
-
-## Goal Details
-### Goal 1: <Name>
-**Trigger evidence:** <utterances, patterns, or inferred source>
-1. <business-level step>
-
-## Shared Sub-Flows
-<shared flows or “None identified.”>
+```bash
+python3 "${PLUGIN_ROOT}/skills/xo-bot-decomposer/scripts/review_coverage.py" \
+  "<output>/_coverage.json" --render-warning "<output>/coverage_warning.md"
+# Insert this current warning immediately below each report title, then validate:
+python3 "${PLUGIN_ROOT}/skills/xo-bot-decomposer/scripts/review_coverage.py" \
+  "<output>/_coverage.json" --business "<analysis.md>" --technical "<technical_reference.md>"
+# Universal mode also requires --system-review "<system_review.md>".
 ```
 
-## Build the technical reference
-
-Document only technical evidence associated with user goals and shared sub-flows. Include:
-
-- environment-variable references and inferred purpose;
-- service method and sanitized URL;
-- authentication requirement, profile reference, and header names with credential values redacted;
-- sanitized request shape, response mapping, and observed failure transitions;
-- entity type, values or format, prompts, and validation;
-- script-node purpose and sanitized code; and
-- evidence gaps or configuration that could not be verified.
-
-Do not expose secrets or claim an integration is unauthenticated merely because secured values are absent from an export. Keep system-only flow detail out unless it materially affects a documented event.
-
-## Quality check
-
-Before delivering the two documents:
-
-- account for every non-system dialog as a goal, event, inline flow, shared flow, or explicit exclusion;
-- ensure every stated fact is supported by generated or source evidence and label inference;
-- verify services, entities, scripts, forms, and environment references against `_inventory.json`;
-- confirm business and technical detail remain separated;
-- confirm both documents begin with the scope disclaimer below their titles;
-- search outputs for unredacted credentials and machine-local paths; never restore redacted values from the raw export;
-- note missing, ambiguous, or unsupported export evidence; and
-- report the files created and the parser route used.
-
+The validator checks disposition/count accounting, evidence for recorded closures, document references and exact shared-warning placement. It does not certify source truth, semantic correctness or runtime behavior. Review all branches, dependencies, callback/error continuations and privacy separately. Deliver useful partial outputs; report parser success independently from unresolved analysis. Link local files, identify parser routes, summarize material gaps and name any untested installed/live behavior.
 
 ## Offer an optional storage handoff
 
@@ -141,7 +76,7 @@ For an accepted upload:
 
 1. Discover the selected provider's available connector tools and guidance. Google Drive uses the `google-drive` skill; OneDrive and SharePoint use their available connector guidance. Verify browsing, upload, readback, and new-folder creation capabilities as needed. These are destination options, not a promise that every environment has the connectors. If a connector or write access is unavailable, explain the limitation and supply the local files for manual upload. Do not require cloud access to finish the documents or substitute a different provider without agreement.
 2. Let the user provide a folder URL/ID or choose from accessible folders when browsing is supported. Show names, locations, and links to resolve ambiguity. For OneDrive, resolve the account and drive; for SharePoint, resolve the site, document library, and folder; for Google Drive, resolve My Drive or the shared drive. Ask only for missing details; do not depend on a native folder picker.
-3. Keep both documents in one folder. For a new folder, confirm the parent and use the recommended name or the user's alternative. Accepting this choice authorizes creation without another confirmation. Reuse an explicitly chosen existing folder directly. If the user selects a drive or document-library root, create the named folder under it instead of uploading loose files there.
+3. Keep the final documents and their referenced sanitized coverage register in one folder. For a new folder, confirm the parent and use the recommended name or the user's alternative. Accepting this choice authorizes creation without another confirmation. Reuse an explicitly chosen existing folder directly. If the user selects a drive or document-library root, create the named folder under it instead of uploading loose files there.
 4. Check for an exact-name folder before creating one. Offer reuse or a distinct name such as `<Bot Name> - XO Decomposition - <YYYY-MM-DD>` if it exists. Verify the resolved folder identifier and write access. Preserve sharing settings, and resolve existing filename collisions according to the user's preference before overwriting files.
-5. Upload only the two final Markdown documents, preserving their contents and filenames; exclude source exports and intermediate evidence. Convert only when requested, using applicable document/provider guidance and verifying the converted files first.
-6. Verify both files and their parent folder through connector readback and return observed folder and file links. Report partial success accurately. Before retrying an uncertain upload, check whether it already created a file and retry only missing or failed uploads.
+5. Upload only the final reports and explicitly approved sanitized coverage/reference deliverables, preserving relative links, contents and filenames; exclude source exports and intermediate evidence. Include child/system reports only within the accepted handoff scope. Convert only when requested, using applicable document/provider guidance and verifying the converted files first.
+6. Verify every selected file and its parent folder through connector readback and return observed folder and file links. Report partial success accurately. Before retrying an uncertain upload, check whether it already created a file and retry only missing or failed uploads.

@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-10-09",
+  "source_kind": "bundled-public-designer",
+  "sources": [
+    {
+      "path": "skills/artemis-designer/references/experience-design-guide.md",
+      "sha256": "bebdd745815276dcf7de061938c7a24f7001ea8c2258cfcc16acd715e7fdc7c2",
+      "adapted_into": [
+        "references/experience-implementation.md"
+      ]
+    },
+    {
+      "path": "skills/artemis-designer/references/voice-experience-guide.md",
+      "sha256": "7d9a8ac150024eb57686046a39fc8e5cbb0bd6f4378420cb71c81e31d9a5ffa0",
+      "adapted_into": [
+        "references/voice-implementation.md"
+      ]
+    },
+    {
+      "path": "skills/artemis-designer/references/digital-experience-guide.md",
+      "sha256": "c393d4d6cf3ba012cc3df9c57ba65e05575fc04943feb052356e8b26580d484c",
+      "adapted_into": [
+        "references/digital-implementation.md"
+      ]
+    },
+    {
+      "path": "skills/artemis-designer/references/solution-architecture-guide.md",
+      "sha256": "f5e929a59ee4be17a25d4b48617ef54a13692cbf1b7a5876b353e16a256e2819",
+      "adapted_into": [
+        "references/agent-architecture-and-abl.md",
+        "references/state-and-conversation-control.md"
+      ]
+    },
+    {
+      "path": "skills/artemis-designer/references/connectivity-integrations-guide.md",
+      "sha256": "997687ed6708caf1a6cf56609c935ca674535b314aa24419a2ae34ee8a8b74da",
+      "adapted_into": [
+        "references/tools-and-integrations.md"
+      ]
+    },
+    {
+      "path": "skills/artemis-designer/references/data-security-guide.md",
+      "sha256": "9324888dfd38b62981e5f3acf98f45dd0a4b6d19a649976899221a216cb14b6d",
+      "adapted_into": [
+        "references/security-and-identity.md"
+      ]
+    },
+    {
+      "path": "skills/artemis-designer/references/operations-testing-release-guide.md",
+      "sha256": "e7283f5fedb6e221801fda35be8d4b13386c622b09c2655b9bd67843767e110b",
+      "adapted_into": [
+        "references/validation-delivery-and-repair.md",
+        "references/performance-and-observability.md"
+      ]
+    }
+  ]
+}

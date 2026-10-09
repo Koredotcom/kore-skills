@@ -1,0 +1,14 @@
+SOURCE REVISION: sample-v1
+AGENT: equipment
+MODE: hybrid (synthetic control-flow notation, not executable ABL)
+L01 On reservation intent: extract item, collection_date, location from user input.
+L02 Ask for each missing field; preserve fields already supplied.
+L03 Once fields are present: call lookup_availability(item, collection_date, location).
+L04 Then call lookup_availability(item, collection_date, location) again with the same inputs.
+L05 If unavailable: suggest another item; do not call reserve.
+L06 If available: ask user to confirm current fields and set waiting_confirmation=true.
+L07 During confirmation, a changed item/date/location updates the corresponding field.
+L08 If waiting_confirmation and user says yes OR changes a field: call reserve with current fields.
+L09 If user says cancel: clear request and respond cancelled; do not call reserve.
+L10 For a successful reserve result: give the returned reference and current fields.
+L11 For reserve failure: explain failure; never claim success.

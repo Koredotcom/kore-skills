@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Advisory structural preflight for Kore Agent Designer packages and legacy files."""
+"""Advisory structural preflight for Artemis Designer packages and legacy files."""
 
 from __future__ import annotations
 
@@ -772,7 +772,7 @@ def add_legacy_traceability(functional: dict[str, Any], technical: dict[str, Any
 
 
 def human_report(report: dict[str, Any]) -> str:
-    lines = ["Kore Agent Designer structural preflight"]
+    lines = ["Artemis Designer structural preflight"]
     if report.get("mode") == "package":
         package = report["package"]
         lines.append(f"Package: {package['status']} — {package['path']}")

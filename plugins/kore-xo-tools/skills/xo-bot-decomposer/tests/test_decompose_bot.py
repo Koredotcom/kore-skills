@@ -11,6 +11,7 @@ from pathlib import Path
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SKILL_DIR / "scripts"))
 ENTRY_POINT = SKILL_DIR / "scripts" / "decompose_bot.py"
 PARSER_PATH = SKILL_DIR / "scripts" / "xo_export_parser.py"
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "botDefinition.json"

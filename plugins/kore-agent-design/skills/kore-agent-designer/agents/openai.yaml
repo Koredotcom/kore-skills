@@ -1,6 +1,0 @@
-interface:
-  display_name: "Kore Agent Designer"
-  short_description: "Create governed enterprise Kore.ai designs"
-  default_prompt: "Use $kore-agent-designer to turn this discovery material into a modular, implementation-ready agent design package."
-policy:
-  allow_implicit_invocation: true

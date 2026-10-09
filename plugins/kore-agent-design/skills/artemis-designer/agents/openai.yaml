@@ -1,0 +1,6 @@
+interface:
+  display_name: "Artemis Designer"
+  short_description: "Create governed enterprise Kore.ai designs"
+  default_prompt: "Use $artemis-designer to turn this discovery material into a modular, implementation-ready agent design package."
+policy:
+  allow_implicit_invocation: true

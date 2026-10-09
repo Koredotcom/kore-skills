@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "purpose": "Configurable diagnostic review defaults; user-agreed targets take precedence.",
+  "targets_seconds": {"chat": 3.0, "voice": 2.0},
+  "definitions": {
+    "chat": "User message sent to first meaningful visible response, or complete response when non-streaming.",
+    "voice": "End of user speech to first meaningful audible response on the actual voice channel."
+  },
+  "test_limits": {"conversations": 10, "user_turns_per_conversation": 10, "elapsed_minutes": 30},
+  "exclusions": ["Typing indicators", "Filler acknowledgements", "Server-side TTFT without channel delivery evidence"],
+  "missing_evidence": "Not measurable; never treated as zero or a pass."
+}

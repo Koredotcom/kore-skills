@@ -1,0 +1,6 @@
+interface:
+  display_name: "Artemis Reviewer"
+  short_description: "Review agent experience, performance and repair evidence"
+  default_prompt: "Use $artemis-reviewer to review this agent against its design with experience and performance specialists."
+policy:
+  allow_implicit_invocation: true
