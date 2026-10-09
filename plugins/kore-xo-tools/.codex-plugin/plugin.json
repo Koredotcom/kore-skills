@@ -1,18 +1,18 @@
 {
   "name": "kore-xo-tools",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Analyze Kore.ai XO bot exports and create clear business and technical documentation.",
   "author": {
     "name": "Kore.ai"
   },
-  "homepage": "https://github.com/Koredotcom/kore-codex-plugins",
-  "repository": "https://github.com/Koredotcom/kore-codex-plugins",
+  "homepage": "https://github.com/Koredotcom/kore-skills",
+  "repository": "https://github.com/Koredotcom/kore-skills",
   "keywords": ["kore.ai", "xo", "bot", "analysis", "documentation"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Kore XO Tools",
     "shortDescription": "Analyze and document Kore.ai XO bot exports.",
-    "longDescription": "Turn Kore.ai XO bot-definition exports into a structured inventory, a business-level goal decomposition, and a technical reference while preserving evidence boundaries.",
+    "longDescription": "Turn Kore.ai XO bot-definition exports into a structured inventory, a business-level goal decomposition, and a technical reference with companion-source, universal-system and explicit coverage-gap analysis.",
     "developerName": "Kore.ai",
     "category": "Productivity",
     "capabilities": ["Analyze", "Write"],

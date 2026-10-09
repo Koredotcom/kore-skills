@@ -16,10 +16,11 @@ Plugins include their own usage guidance, supported inputs, limitations, and exa
 
 Installs `$xo-bot-decomposer`, which analyzes a Kore.ai XO bot-definition JSON, ZIP, or extracted export and produces:
 
-- a business-level inventory of user goals, events, and flow steps; and
-- a technical reference for integrations, entities, scripts, forms, channels, and configuration evidence.
+- a business-level inventory of user goals, events, and flow steps;
+- a technical reference for integrations, entities, scripts, events, SDK webhooks, helpers and supplied BotKit/configuration evidence; and
+- an explicit coverage/dependency register, with coordinated child/shared-runtime analysis for universal systems.
 
-The skill processes supplied files locally, redacts likely credential values from generated evidence, and does not estimate implementation effort.
+The skill processes supplied files locally, redacts likely credential values from generated evidence, and does not estimate implementation effort. Version `0.4.0` adds selected multi-source intake, recursive node coverage, reviewable dependency gaps and schema-v2 outputs. JavaScript discovery is lexical and requires semantic review; source checks do not establish deployed behavior. See the [input/schema compatibility notes](plugins/kore-xo-tools/skills/xo-bot-decomposer/references/evidence-schema.md).
 
 ### Artemis
 

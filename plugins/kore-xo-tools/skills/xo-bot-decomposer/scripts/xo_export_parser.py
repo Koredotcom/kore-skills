@@ -15,7 +15,7 @@ Notes:
   version 9.x) and XO 11 use this shape — the extractor handles both.
 - For exports that nest the bot under a wrapper key (botDefinition,
   appDefinition, app, bot), the extractor unwraps automatically.
-- System / utility intents (welcome task, fallback task, etc.) are filtered.
+- The stable entry point preserves all system/support dialogs and recursive evidence.
 - Sub-dialog invocations (an `intent` node whose component points to a
   different dialog via dialogId) are surfaced explicitly so they can be
   inlined into the parent flow during analysis.
@@ -28,6 +28,7 @@ import sys
 import json
 import urllib.parse
 from collections import Counter
+from xo_graph import discover_graph
 from urllib.parse import unquote
 from typing import Dict, Any, List, Tuple
 
@@ -81,6 +82,15 @@ def _redact_text(value: object) -> str:
             return match.group(0)
         return f"{match.group('prefix')}{REDACTED}{match.group('suffix')}"
 
+    text = re.sub(
+        r"(?i)(?P<prefix>\b(?:apiKey|accessToken|clientSecret|password|secret|token|authorization)\b\s*:\s*[\"'`])(?P<value>[^\"'`]*)(?P<suffix>[\"'`])",
+        replace_value, text,
+    )
+    text = re.sub(
+        r"(?i)(?P<prefix>\b(?:apiKey|accessToken|clientSecret|password|secret|token|authorization)\b\s*=\s*`)(?P<value>[^`]*)(?P<suffix>`)",
+        replace_value, text,
+    )
+    text = re.sub(r"(?i)(https?://)[^/\s:@]+:[^/\s@]+@", r"\1[REDACTED]@", text)
     text = SENSITIVE_JSON_VALUE_RE.sub(replace_value, text)
     text = SENSITIVE_ASSIGNMENT_RE.sub(replace_value, text)
     text = SENSITIVE_QUERY_RE.sub(
@@ -105,6 +115,10 @@ def _redact_structure(value: Any, field_name: str = "") -> Any:
             return value
         return REDACTED
     if isinstance(value, dict):
+        # Exported variables often use {name/key, value}, even with isSecured=false.
+        secret_name = value.get("name", value.get("key", ""))
+        if isinstance(secret_name, str) and SENSITIVE_FIELD_RE.search(secret_name):
+            value = {key: (REDACTED if key in ("value", "defaultValue", "default") and not _is_portable_reference(item) else item) for key, item in value.items()}
         return {key: _redact_structure(item, str(key)) for key, item in value.items()}
     if isinstance(value, list):
         return [_redact_structure(item) for item in value]
@@ -393,103 +407,38 @@ def get_node_metadata(node_in_flow, component, component_details=None, current_d
 
 
 def parse_condition(condition_obj):
-    """Parses a condition object into a readable string."""
-    if not condition_obj or not isinstance(condition_obj, dict):
-        return "Unknown Condition"
-
-    # XO 10/11 short forms: {"dialogAct": "yes"} or {"intent": "Some Intent"}
-    # are implicit matches — no `op`/`value` keys. Treat as equality.
-    if "dialogAct" in condition_obj and "op" not in condition_obj:
-        return f"dialogAct == {condition_obj['dialogAct']}"
-    if "intent" in condition_obj and "op" not in condition_obj:
-        return f"intent == {condition_obj['intent']}"
-
-    field = "UnknownField"
-    if "context" in condition_obj:
-        field = condition_obj["context"]
-    elif "field" in condition_obj:
-        field = f"entities.{condition_obj['field']}"
-    elif "dialogAct" in condition_obj:
-        field = f"dialogAct.{condition_obj['dialogAct']}"
-    elif "intent" in condition_obj:
-        field = f"intent.{condition_obj['intent']}"
-
-    op = condition_obj.get("op", "UnknownOp")
-    value = condition_obj.get("value", "UnknownValue")
-    if op == "eq":
-        op_str = "=="
-    elif op == "exists":
+    """Render known boolean structure without inventing absent operators."""
+    if isinstance(condition_obj, list):
+        return "[unspecified conjunction: " + "; ".join(parse_condition(c) for c in condition_obj) + "]"
+    if not isinstance(condition_obj, dict) or not condition_obj:
+        return "Unresolved condition: " + json.dumps(condition_obj, sort_keys=True)
+    if "tests" in condition_obj:
+        op = str(condition_obj.get("conjoin", "UNRESOLVED CONJUNCTION")).upper()
+        if op not in ("AND", "OR"):
+            op = "UNRESOLVED CONJUNCTION " + op
+        return "(" + (" " + op + " ").join(parse_condition(c) for c in condition_obj["tests"]) + ")"
+    field = condition_obj.get("context", condition_obj.get("field", condition_obj.get("dialogAct", condition_obj.get("intent"))))
+    op = condition_obj.get("op")
+    if field is None or op is None:
+        return "Unresolved condition: " + json.dumps(condition_obj, sort_keys=True)
+    if op == "exists":
         return f"{field} exists"
-    else:
-        op_str = op
-    return f"{field} {op_str} {value}"
+    return f"{field} { {'eq': '=='}.get(op, op) } {condition_obj.get('value', '[value not supplied]')}"
 
 
 def parse_transitions(transitions, node_id_to_name_map):
-    """Parses transitions into a list of readable strings."""
-    parsed_transitions = []
     if not transitions:
         return ["End of dialog"]
-
+    result = []
     for transition in transitions:
-        target_node_id = None
-        condition_str = "N/A"
-
-        if transition.get("default"):
-            target_node_id = transition["default"]
-            condition_str = "default"
-        elif transition.get("if"):
-            if_condition = transition["if"]
-
-            if isinstance(if_condition, dict):
-                condition_str = f"if ({parse_condition(if_condition)})"
-            elif isinstance(if_condition, list):
-                conditions_list = []
-                conjoin_op = "OR"
-
-                if (
-                    if_condition
-                    and isinstance(if_condition[0], dict)
-                    and "conjoin" in if_condition[0]
-                    and "tests" in if_condition[0]
-                ):
-                    conjoin_op = if_condition[0].get("conjoin", "AND").upper()
-                    tests = if_condition[0].get("tests", [])
-                    for test_group in tests:
-                        if isinstance(test_group, list) and test_group:
-                            group_conds = [
-                                parse_condition(c) for c in test_group if isinstance(c, dict)
-                            ]
-                            conditions_list.append(f"({' AND '.join(group_conds)})")
-                        elif isinstance(test_group, dict):
-                            conditions_list.append(parse_condition(test_group))
-                else:
-                    for cond_obj in if_condition:
-                        if isinstance(cond_obj, list) and cond_obj:
-                            conditions_list.append(parse_condition(cond_obj[0]))
-                        elif isinstance(cond_obj, dict):
-                            conditions_list.append(parse_condition(cond_obj))
-
-                condition_str = f"if ({f' {conjoin_op} '.join(conditions_list)})"
-
-            target_node_id = transition.get("then") or transition.get("default")
-
-        if target_node_id:
-            target_name = node_id_to_name_map.get(target_node_id, target_node_id)
-            if target_node_id == "end":
-                target_name = "End of dialog"
-            parsed_transitions.append(f"{condition_str} -> {target_name}")
-        elif condition_str != "N/A":
-            target_node_id = transition.get("default")
-            if target_node_id:
-                target_name = node_id_to_name_map.get(target_node_id, target_node_id)
-                if target_node_id == "end":
-                    target_name = "End of dialog"
-                parsed_transitions.append(f"{condition_str} (then default) -> {target_name}")
-            else:
-                parsed_transitions.append(f"{condition_str} -> DestinationUnclear")
-
-    return parsed_transitions if parsed_transitions else ["End of dialog (or unparsed transition)"]
+        if not isinstance(transition, dict):
+            result.append("Unresolved transition: " + json.dumps(transition))
+            continue
+        target = transition.get("then", transition.get("default"))
+        condition = parse_condition(transition["if"]) if "if" in transition else "default" if "default" in transition else "unresolved"
+        name = "End of dialog" if target == "end" else node_id_to_name_map.get(target, target)
+        result.append(f"{condition} -> {name or 'DestinationUnclear'} [{target}]")
+    return result
 
 
 def parse_kore_ai_dialog_flow(app_def_data: Dict[str, Any]) -> str:
@@ -648,13 +597,16 @@ def write_metadata_file(data: Dict[str, Any], output_dir: str) -> None:
         or data.get("piiSettings")
         or data.get("botSettings", {}).get("piiRedaction")
     )
-    if pii:
-        lines.append("- **Global:** Enabled")
-        lines.append(f"```json\n{json.dumps(pii, indent=2)[:800]}\n```")
+    for key in ("piiRedaction", "piiData", "piiSettings"):
+        if key in data:
+            pii = data[key]
+            break
+    if pii is not None:
+        lines.append("- **Global:** Exported configuration; effective deployment state is unverified.")
+        lines.append(f"```json\n{json.dumps(pii, indent=2)}\n```")
     else:
-        lines.append("- **Global:** Not configured.")
-        lines.append("- **Local overrides:** None found.")
-        lines.append("- No PII redaction configured.")
+        lines.append("- No global PII configuration found in this export; deployed behavior is unverified.")
+    lines.append("- **Local overrides:** Inspect relevant entity/intent configuration before claiming coverage.")
     lines.append("")
 
     # Digital Forms — scan components for form-type nodes
@@ -689,32 +641,21 @@ def _decoded(value: Any) -> str:
 
 
 def _environment_references(value: Any) -> List[str]:
-    """Find environment references anywhere in a JSON-compatible value."""
-    text = json.dumps(value, ensure_ascii=False, sort_keys=True)
-    refs = re.findall(
-        r"\{\{\s*(env\.[A-Za-z0-9_.-]+)",
-        text + "\n" + urllib.parse.unquote(text),
-    )
-    return sorted(set(refs), key=str.casefold)
+    text = urllib.parse.unquote(json.dumps(value, ensure_ascii=False))
+    refs = re.findall(r"\benv\.([A-Za-z0-9_.-]+)", text)
+    refs += re.findall(r"\benv\[\s*['\"]([^'\"]+)['\"]\s*\]", text.replace('\\"', '"'))
+    return sorted({"env." + r for r in refs}, key=str.casefold)
 
 
 def _component_dialog_map(data: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
-    """Map component IDs to every dialog node that uses them."""
-    result: Dict[str, List[Dict[str, Any]]] = {}
-    for dialog in data.get("dialogs", []):
-        dialog_id = dialog.get("_id")
-        dialog_name = dialog.get("localeData", {}).get("en", {}).get("name", "Unnamed Dialog Task")
-        for node in dialog.get("nodes", []):
-            component_id = node.get("componentId")
-            if component_id:
-                result.setdefault(component_id, []).append(
-                    {
-                        "dialog_id": dialog_id,
-                        "dialog_name": dialog_name,
-                        "node_id": node.get("nodeId"),
-                        "node_type": node.get("type"),
-                    }
-                )
+    result = {}
+    for o in discover_graph(data)["node_occurrences"]:
+        if o["component_id"]:
+            result.setdefault(o["component_id"], []).append({
+                "dialog_id": o["dialog_id"], "dialog_name": o["dialog_name"], "node_id": o["node_id"],
+                "node_type": o["type"], "source_pointer": o["source_pointer"], "occurrence_path": o["occurrence_path"],
+                "parent_chain": o["parent_chain"],
+            })
     return result
 
 
@@ -727,6 +668,7 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
     components = data.get("dialogComponents", [])
     component_by_id = {component.get("_id"): component for component in components}
     component_usage = _component_dialog_map(data)
+    graph = discover_graph(data)
     dialog_name_by_id = {
         dialog.get("_id"): dialog.get("localeData", {}).get("en", {}).get("name", "Unnamed Dialog Task")
         for dialog in data.get("dialogs", [])
@@ -754,7 +696,8 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
             default_bot_lang=default_language,
         )
         nodes: List[Dict[str, Any]] = []
-        for node in dialog.get("nodes", []):
+        for occurrence in [o for o in graph["node_occurrences"] if o["dialog_id"] == dialog.get("_id")]:
+            node = occurrence["node"]
             component = component_by_id.get(node.get("componentId"), {})
             linked_dialog_id = component.get("dialogId") if node.get("type") == "intent" else None
             linked_dialog_name = None
@@ -771,6 +714,10 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
                 )
             nodes.append(
                 {
+                    "source_pointer": occurrence["source_pointer"],
+                    "occurrence_path": occurrence["occurrence_path"],
+                    "parent_chain": occurrence["parent_chain"],
+                    "transitions_raw": node.get("transitions", []),
                     "node_id": node.get("nodeId"),
                     "component_id": node.get("componentId"),
                     "type": node.get("type", "unknown"),
@@ -824,8 +771,8 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
                     "method": str(endpoint.get("method", "GET")).upper(),
                     "url": _redact_text(f"{protocol}://{host}{path}"),
                     "authentication": {
-                        "required": bool(component.get("authRequired", False)),
-                        "idp": component.get("idp", "none"),
+                        "required": component.get("authRequired"),
+                        "idp": component.get("idp", "not_exported"),
                     },
                     "headers": headers,
                     "request_body": _redact_text(component.get("payload", {}).get("value", "")),
@@ -879,7 +826,10 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
         if not dialog["is_hidden"] and not dialog["is_follow_up"]
     ]
     return {
-        "schema_version": 1,
+        "schema_version": 2,
+        "discovery": graph["discovery"],
+        "node_occurrences": graph["node_occurrences"],
+        "graph_issues": graph["graph_issues"],
         "source": source_name,
         "version_route": version_route,
         "summary": {
@@ -911,7 +861,7 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
 
 
 def write_inventory_files(inventory: Dict[str, Any], output_dir: str) -> None:
-    """Write a complete JSON manifest and a compact human-readable survey."""
+    """Write structured evidence and a compact survey; semantic coverage is separate."""
     json_path = os.path.join(output_dir, "_inventory.json")
     with open(json_path, "w", encoding="utf-8") as stream:
         json.dump(inventory, stream, indent=2, ensure_ascii=False, sort_keys=True)
