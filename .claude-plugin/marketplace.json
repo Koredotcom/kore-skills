@@ -14,6 +14,7 @@
     },
     {
       "name": "kore-agent-design",
+      "displayName": "Artemis",
       "source": "./plugins/kore-agent-design",
       "description": "Design, build and review Kore.ai agents with traceable experience and performance evidence."
     },

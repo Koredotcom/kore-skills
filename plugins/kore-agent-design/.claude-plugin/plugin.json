@@ -1,6 +1,7 @@
 {
   "name": "kore-agent-design",
-  "version": "0.7.1",
+  "displayName": "Artemis",
+  "version": "0.7.2",
   "description": "Design, build and review Kore.ai agents with traceable experience and performance evidence.",
   "author": {
     "name": "Kore.ai"

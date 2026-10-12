@@ -86,6 +86,8 @@ codex plugin marketplace upgrade kore-skills
 
 ## Getting started with Claude Code
 
+The **Artemis** plugin bundles **Artemis Designer**, **Artemis Developer** and **Artemis Reviewer**. Its Claude marketplace entry and manifest declare `displayName: "Artemis"`; the stable package ID and command namespace remain `kore-agent-design`.
+
 Add the same repository and install the plugins you need:
 
 ```bash
@@ -122,7 +124,7 @@ Both catalogs point to the same `plugins/` directories. Skill instructions, Pyth
 
 Helper examples accept `PLUGIN_ROOT` or Claude's `CLAUDE_PLUGIN_ROOT`. If neither is available, resolve the helper relative to the loaded `SKILL.md`. Helpers require Python 3.10+. Skill delegation uses the host's available tools and retains the documented sequential fallback when subagents are unavailable.
 
-The compatibility release versions are XO Tools `0.4.1`, Artemis `0.7.1`, and Arch `0.2.1`. Earlier version descriptions above identify the feature releases. Package validation and discovery checks do not certify model behavior, authentication, or live Agent Platform operations in either client.
+The compatibility release versions are XO Tools `0.4.1`, Artemis `0.7.2`, and Arch `0.2.1`. Artemis `0.7.2` adds the Claude display name while retaining the existing package ID and shared skills. Earlier version descriptions above identify the feature releases. Package validation and discovery checks do not certify model behavior, authentication, or live Agent Platform operations in either client.
 
 For other coding agents, reuse the skill folders only after checking their native installation format and runtime capabilities.
 
