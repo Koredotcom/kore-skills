@@ -1,0 +1,20 @@
+{
+  "name": "kore-agent-design",
+  "version": "0.7.1",
+  "description": "Design, build and review Kore.ai agents with traceable experience and performance evidence.",
+  "author": {
+    "name": "Kore.ai"
+  },
+  "homepage": "https://github.com/Koredotcom/kore-skills",
+  "repository": "https://github.com/Koredotcom/kore-skills",
+  "keywords": [
+    "kore.ai",
+    "agent",
+    "design",
+    "development",
+    "review",
+    "abl",
+    "performance"
+  ],
+  "skills": "./skills/"
+}

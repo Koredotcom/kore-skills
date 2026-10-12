@@ -39,3 +39,8 @@ jobs:
 
       - name: Scan repository files for local paths
         run: python3 scripts/check_repository_safety.py --all-files
+
+      - name: Check Codex and Claude marketplace parity
+        run: |
+          python3 scripts/check_marketplace_parity.py
+          python3 -m unittest discover -s tests -v

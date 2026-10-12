@@ -1,0 +1,19 @@
+{
+  "name": "arch-agent-platform",
+  "version": "0.2.1",
+  "description": "Connect to the Kore.ai Agent Platform MCP toolkit for agent development, evaluation, and diagnostics.",
+  "author": {
+    "name": "Kore.ai"
+  },
+  "homepage": "https://github.com/Koredotcom/kore-skills",
+  "repository": "https://github.com/Koredotcom/kore-skills",
+  "keywords": [
+    "kore.ai",
+    "agent-platform",
+    "arch",
+    "mcp",
+    "debugging",
+    "evaluation"
+  ],
+  "mcpServers": "./.mcp.json"
+}

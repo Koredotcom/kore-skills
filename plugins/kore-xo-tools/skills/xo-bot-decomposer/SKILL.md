@@ -20,11 +20,11 @@ Use an explicit destination without asking again. Otherwise create fresh tempora
 ## Generate mechanical evidence
 
 ```bash
-python3 "${PLUGIN_ROOT}/skills/xo-bot-decomposer/scripts/decompose_bot.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/xo-bot-decomposer/scripts/decompose_bot.py" \
   "<export.zip-or-json-or-folder>" "<fresh-output-directory>"
 ```
 
-When testing source with `PLUGIN_ROOT` unset, resolve scripts relative to this file. Python 3.10+ is sufficient; no third-party runtime packages are required. Read [references/evidence-schema.md](references/evidence-schema.md) for arguments, supported shapes, schema migration, statuses and helper limitations.
+Use `PLUGIN_ROOT` in Codex or `CLAUDE_PLUGIN_ROOT` in Claude Code for the installed plugin directory. If neither is available, resolve scripts relative to this `SKILL.md`. Python 3.10+ is sufficient; no third-party runtime packages are required. Read [references/evidence-schema.md](references/evidence-schema.md) for arguments, supported shapes, schema migration, statuses and helper limitations.
 
 - Repeat `--additional-export`, `--botkit`, `--companion-source` and `--contracts` for selected inputs. Pass `--defer <dependency>` for unavailable inputs already identified.
 - Multiple plausible definitions produce an explicit selection gap. Inspect `_artifact_manifest.json`, then rerun to a fresh output with repeated `--definition <exact-artifact-id>` or explicit `--all-definitions`. Do not choose the largest definition silently.
@@ -58,10 +58,10 @@ Read [references/output-detail.md](references/output-detail.md) before authoring
 Update each review item's disposition, specific reason and document references. Resolve a gap only with `resolution_evidence` and an appended `resolution_history`; finding a client/helper does not close provider/runtime questions. Record semantic additions (e.g. exact dispatcher matches, missing reset paths or state-key mismatches) in the same ledger. Do not change counts to hide unknown categories.
 
 ```bash
-python3 "${PLUGIN_ROOT}/skills/xo-bot-decomposer/scripts/review_coverage.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/xo-bot-decomposer/scripts/review_coverage.py" \
   "<output>/_coverage.json" --render-warning "<output>/coverage_warning.md"
 # Insert this current warning immediately below each report title, then validate:
-python3 "${PLUGIN_ROOT}/skills/xo-bot-decomposer/scripts/review_coverage.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/xo-bot-decomposer/scripts/review_coverage.py" \
   "<output>/_coverage.json" --business "<analysis.md>" --technical "<technical_reference.md>"
 # Universal mode also requires --system-review "<system_review.md>".
 ```

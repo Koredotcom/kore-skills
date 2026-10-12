@@ -1,0 +1,26 @@
+{
+  "name": "kore-skills",
+  "owner": {
+    "name": "Kore.ai"
+  },
+  "metadata": {
+    "description": "Reusable skills and tools for Kore.ai products."
+  },
+  "plugins": [
+    {
+      "name": "kore-xo-tools",
+      "source": "./plugins/kore-xo-tools",
+      "description": "Analyze Kore.ai XO bot exports and create clear business and technical documentation."
+    },
+    {
+      "name": "kore-agent-design",
+      "source": "./plugins/kore-agent-design",
+      "description": "Design, build and review Kore.ai agents with traceable experience and performance evidence."
+    },
+    {
+      "name": "arch-agent-platform",
+      "source": "./plugins/arch-agent-platform",
+      "description": "Connect to the Kore.ai Agent Platform MCP toolkit for agent development, evaluation, and diagnostics."
+    }
+  ]
+}
