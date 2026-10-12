@@ -50,10 +50,10 @@ Write the canonical results described in [findings-and-report.md](references/fin
 Use the read-only [metrics helper](scripts/summarize_metrics.py) for repeatable descriptive statistics:
 
 ```bash
-python3 "${PLUGIN_ROOT}/skills/artemis-reviewer/scripts/summarize_metrics.py" "<run-folder>/results/metric-observations.json"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/artemis-reviewer/scripts/summarize_metrics.py" "<run-folder>/results/metric-observations.json"
 ```
 
-It requires Python 3.10+ standard library, writes JSON to stdout, groups snapshots/channels/measurement types separately and cannot verify telemetry provenance or business correctness. When `PLUGIN_ROOT` is unset, resolve the script from this skill directory. See the [finding contract](references/findings-and-report.md) for the input and missing/timeout semantics.
+It requires Python 3.10+ standard library, writes JSON to stdout, groups snapshots/channels/measurement types separately and cannot verify telemetry provenance or business correctness. Use `PLUGIN_ROOT` in Codex or `CLAUDE_PLUGIN_ROOT` in Claude Code for the installed plugin directory. If neither is available, resolve the script relative to this `SKILL.md`. See the [finding contract](references/findings-and-report.md) for the input and missing/timeout semantics.
 
 ## Close an authorized repair loop
 

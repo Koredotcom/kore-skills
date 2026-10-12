@@ -16,8 +16,9 @@ Keep this repository separate from internal FDE, delivery, sales engineering, or
 
 ## Repository and Marketplace Structure
 
-- The marketplace catalog is `.agents/plugins/marketplace.json`; its stable marketplace name is `kore-skills` and its display name is `Kore Skills`.
-- Keep each canonical Codex plugin under `plugins/<plugin-name>/` with a `.codex-plugin/plugin.json` manifest.
+- The Codex marketplace catalog is `.agents/plugins/marketplace.json`; the Claude Code catalog is `.claude-plugin/marketplace.json`. Both use the stable marketplace name `kore-skills`; Codex displays `Kore Skills`.
+- Keep each canonical plugin under `plugins/<plugin-name>/` with separate `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json` manifests pointing to the same skills and resources. Preserve Codex interface and policy metadata in the Codex files.
+- Keep shared manifest metadata and versions aligned across both clients. Run `python3 scripts/check_marketplace_parity.py` to detect drift; do not duplicate skill implementations for a client.
 - Put skill instructions under `skills/<skill-name>/SKILL.md`, discovery metadata under `agents/openai.yaml`, and executable helpers under `scripts/`.
 - Keep plugin directory names, manifest names, marketplace entries, and documentation aligned.
 - Append new marketplace entries unless a deliberate reordering is part of the change.
@@ -32,7 +33,7 @@ Keep this repository separate from internal FDE, delivery, sales engineering, or
 - Use deterministic helpers for repeated parsing, validation, and transformation. Keep semantic judgment in the skill instructions rather than hiding it in brittle automation.
 - Keep dependencies minimal, portable, and documented. Do not assume access to internal MCP servers, templates, drives, systems, or credentials.
 - Use synthetic fixtures that cover materially different supported cases. Never use raw customer exports as examples or tests.
-- Avoid source-agent-specific commands or metadata unless they are explicitly documented as a compatibility note. The published implementation must be Codex-native.
+- Keep shared skill workflows portable across Codex and Claude Code. Document client-specific invocation and plugin-root resolution explicitly; preserve `agents/openai.yaml` for Codex discovery. Do not assume identical tool names or subagent availability across clients.
 
 ## Validation and Repository Safety
 
@@ -56,4 +57,4 @@ Treat the following as release blockers:
 - missing validation evidence for behavior changed by the proposal; or
 - a distributed plugin change without an appropriate version increment.
 
-Local personal instructions belong in ignored files such as `AGENTS.local.md` or `AGENTS.override.md`; local agent state belongs outside this repository. `CLAUDE.md` and its local variants are also ignored because this marketplace is Codex-native. Shared public guidance belongs in this file.
+Local personal instructions belong in ignored files such as `AGENTS.local.md` or `AGENTS.override.md`; local agent state belongs outside this repository. `CLAUDE.md` and its local variants remain ignored local instructions; distributable Claude metadata belongs in `.claude-plugin/`. Shared public guidance belongs in this file.

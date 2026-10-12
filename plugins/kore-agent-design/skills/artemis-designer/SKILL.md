@@ -128,11 +128,11 @@ Review facts across the complete package rather than treating a missing heading 
 Run the advisory package checker after creating or updating a modular package:
 
 ```bash
-python3 "${PLUGIN_ROOT}/skills/artemis-designer/scripts/check_design_structure.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/artemis-designer/scripts/check_design_structure.py" \
   --package "<agent-slug>-design"
 ```
 
-When `PLUGIN_ROOT` is unset in a repository checkout, resolve the script relative to this `SKILL.md`. The checker verifies package structure, metadata, links, identifiers, manifest consistency, wave alignment, and traceability. It never replaces semantic review.
+Use `PLUGIN_ROOT` in Codex or `CLAUDE_PLUGIN_ROOT` in Claude Code for the installed plugin directory. If neither is available, resolve the script relative to this `SKILL.md`. The checker verifies package structure, metadata, links, identifiers, manifest consistency, wave alignment, and traceability. It never replaces semantic review.
 
 ## Prepare the implementation handoff
 

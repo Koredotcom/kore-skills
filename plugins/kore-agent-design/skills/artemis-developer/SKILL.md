@@ -67,8 +67,8 @@ For a requested independent review, read the bundled [Artemis Reviewer](../artem
 Use the read-only [snapshot helper](scripts/snapshot_package.py) for repeatable file inventories and comparisons:
 
 ```bash
-python3 "${PLUGIN_ROOT}/skills/artemis-developer/scripts/snapshot_package.py" "<export-folder>" > "<run-folder>/source-manifest.json"
-python3 "${PLUGIN_ROOT}/skills/artemis-developer/scripts/snapshot_package.py" "<working-folder>" --compare "<run-folder>/source-manifest.json"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/artemis-developer/scripts/snapshot_package.py" "<export-folder>" > "<run-folder>/source-manifest.json"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/artemis-developer/scripts/snapshot_package.py" "<working-folder>" --compare "<run-folder>/source-manifest.json"
 ```
 
-Write the manifest outside the scanned folder. When `PLUGIN_ROOT` is unset, resolve the helper relative to this skill. Python 3.10+ standard library only; it never compiles source, applies a patch or replaces platform source-hash checks.
+Write the manifest outside the scanned folder. Use `PLUGIN_ROOT` in Codex or `CLAUDE_PLUGIN_ROOT` in Claude Code for the installed plugin directory. If neither is available, resolve the helper relative to this `SKILL.md`. Python 3.10+ standard library only; it never compiles source, applies a patch or replaces platform source-hash checks.
