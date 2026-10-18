@@ -682,7 +682,11 @@ def validate_traceability(documents: list[dict[str, Any]]) -> tuple[list[str], d
 def inspect_package(package: Path) -> dict[str, Any]:
     if not package.is_dir():
         raise OSError(f"package directory not found: {package}")
-    paths = sorted(path for path in package.rglob("*.md") if not any(part.startswith(".") for part in path.parts))
+    # Ignore hidden content within the package, not the package's own location.
+    paths = sorted(
+        path for path in package.rglob("*.md")
+        if not any(part.startswith(".") for part in path.relative_to(package).parts)
+    )
     documents = [inspect_modular_document(path, package) for path in paths]
     warnings: list[str] = []
     if not paths:

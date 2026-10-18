@@ -1,6 +1,6 @@
 {
   "name": "kore-agent-design",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Design, build and review Kore.ai agents with traceable experience and performance evidence.",
   "author": {
     "name": "Kore.ai"
