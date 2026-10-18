@@ -13,12 +13,13 @@ FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
 class CheckDesignStructureTests(unittest.TestCase):
-    def run_checker(self, *args: str) -> dict:
+    def run_checker(self, *args: str, cwd: Path | None = None) -> dict:
         completed = subprocess.run(
             [sys.executable, str(SCRIPT), "--json", *args],
             check=True,
             capture_output=True,
             text=True,
+            cwd=cwd,
         )
         return json.loads(completed.stdout)
 
@@ -27,6 +28,32 @@ class CheckDesignStructureTests(unittest.TestCase):
         self.assertEqual(result["package"]["status"], "PASS")
         self.assertEqual(result["package"]["inventory"]["documentCount"], 9)
         self.assertEqual(result["package"]["inventory"]["undefinedReferences"], [])
+
+    def test_package_under_hidden_ancestors_or_with_hidden_name_passes(self) -> None:
+        baseline = self.run_checker("--package", str(FIXTURES / "modular_standard"))["package"]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for relative in (".agents/skills/design", ".claude/skills/design", ".design"):
+                package = root / relative
+                shutil.copytree(FIXTURES / "modular_standard", package)
+                for argument in (str(package), relative):
+                    with self.subTest(package=relative, argument=argument):
+                        result = self.run_checker("--package", argument, cwd=root)["package"]
+                        self.assertEqual(result["status"], "PASS")
+                        for key in ("warnings", "documents", "inventory"):
+                            self.assertEqual(result[key], baseline[key])
+
+    def test_hidden_content_inside_package_remains_excluded(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            baseline = self.run_checker("--package", str(package))["package"]
+            for relative in (".notes.md", ".git/ignored.md", "technical/.cache/ignored.md", "technical/.draft.md"):
+                hidden = package / relative
+                hidden.parent.mkdir(parents=True, exist_ok=True)
+                hidden.write_text("# Unindexed draft\n\nFR-999\n", encoding="utf-8")
+            result = self.run_checker("--package", str(package))["package"]
+            self.assertEqual(result, baseline)
 
     def test_manifest_drift_and_broken_link_are_reported(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

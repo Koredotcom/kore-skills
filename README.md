@@ -42,6 +42,16 @@ Requires Node.js with `npx`, network access to the npm registry, and access to t
 
 The server launches `npx -y @koreai/arch-mcp-tools@latest`. The toolkit version can therefore change independently of this wrapper; restart the server in a new task to pick up a newly published toolkit. The toolkit has its own licensing and runtime behavior. Installation does not itself authorize project changes or deployment.
 
+## Choose an installation method
+
+| Setup | Use this guide |
+| --- | --- |
+| Install native plugins for Codex | [Codex setup](#getting-started-with-codex) |
+| Install native plugins for Claude Code | [Claude Code setup](#getting-started-with-claude-code) |
+| Share a repeatable project setup across Claude Code and Codex | [Microsoft APM setup](#getting-started-with-microsoft-apm) |
+
+Use one installation method per capability in a project to avoid duplicate skills or MCP registrations. Install and sign in to your chosen client first. Python 3.10+ is required for bundled skill helpers; Arch additionally requires Node.js with `npx` and access to your Agent Platform environment. The terminal instructions below target Codex and Claude Code; they do not configure Claude Desktop's separate plugin interface.
+
 ## Getting started with Codex
 
 ### 1. Add the marketplace
@@ -58,20 +68,22 @@ codex plugin marketplace add Koredotcom/kore-skills --ref main
 codex plugin list --marketplace kore-skills
 ```
 
-### 3. Install a plugin
-
-Replace `<plugin-name>` with a plugin listed by the previous command:
+### 3. Install the plugins you need
 
 ```bash
-codex plugin add <plugin-name>@kore-skills
+codex plugin add kore-agent-design@kore-skills
+codex plugin add kore-xo-tools@kore-skills
+codex plugin add arch-agent-platform@kore-skills
 ```
+
+`kore-agent-design` installs the complete Artemis Designer, Developer and Reviewer bundle. Skip any package you do not need.
 
 ### 4. Start using it
 
 Start a new Codex task after installation. Describe the outcome you want in plain language and attach any files the workflow needs. Codex can select an applicable skill automatically, or you can explicitly request one by name—for example:
 
 ```text
-Use $<skill-name> to analyze the attached Kore.ai artifact.
+Use $artemis-designer to help design an agent from the attached requirements.
 ```
 
 Review each plugin's documentation for supported product versions, required inputs, expected outputs, and any setup steps.
@@ -118,13 +130,86 @@ claude plugin update kore-agent-design@kore-skills
 
 Repeat the plugin update for other installed Kore plugins, then start a new session.
 
-### Shared content and compatibility
+## Getting started with Microsoft APM
+
+[Microsoft Agent Package Manager (APM)](https://microsoft.github.io/apm/) installs this repository's existing Claude marketplace packages into your project for Claude Code and Codex. It reuses the same skills, helpers and MCP definition; no separate skill copies are needed.
+
+### 1. Install APM
+
+Install Git and follow the [official APM installation guide](https://microsoft.github.io/apm/getting-started/installation/) for your operating system. For example, on macOS or Linux with Homebrew:
+
+```bash
+brew install apm
+apm --version
+```
+
+This repository's setup was validated with APM `0.33.0`. The skill-helper and Arch prerequisites listed above still apply.
+
+### 2. Admin or project maintainer: choose the packages once
+
+Open a terminal in **your own project or shared project template**, then run:
+
+```bash
+apm marketplace add Koredotcom/kore-skills
+apm install kore-agent-design@kore-skills kore-xo-tools@kore-skills arch-agent-platform@kore-skills --target claude,codex
+```
+
+Select only the packages you need. Use `--target claude` or `--target codex` for a single client. The packages are:
+
+| Package | Included capabilities |
+| --- | --- |
+| `kore-agent-design` | Artemis Designer, Developer and Reviewer—all three install together |
+| `kore-xo-tools` | XO Bot Decomposer |
+| `arch-agent-platform` | Arch MCP tools for authorized platform work |
+
+`Koredotcom/kore-skills` is GitHub `owner/repository` shorthand. The full URL `https://github.com/Koredotcom/kore-skills` also works with `apm marketplace add`. In `kore-agent-design@kore-skills`, APM resolves the package before `@` from the registered marketplace after `@`.
+
+APM creates `apm.yml` with the selected targets and resolved repository package paths, plus `apm.lock.yaml` recording the installed revisions. Review and commit these files and the generated target configuration/skill files in your consumer project; keep `apm_modules/` ignored. Review generated metadata and configuration for local identity or credentials before sharing. See [APM's install and source-control guidance](https://microsoft.github.io/apm/consumer/install-packages/).
+
+### 3. Team members: restore the shared setup
+
+After installing APM and cloning the configured project or creating a project from its template, run from that project's root:
+
+```bash
+apm install
+```
+
+Team members do **not** need to name each skill or repeat marketplace registration: the committed manifest already identifies the packages and targets. For CI or a strict lockfile restore, use `apm install --frozen`. Keep the restored `apm_modules/` directory available because installed skills can link to its supporting content.
+
+The marketplace is a shared catalog. Registering or installing it on an admin's computer does not install it on everyone else's computer. Use a shared project/template for this onboarding flow; use your organization's provisioning tooling if installation must run automatically. Administrators can additionally govern allowed sources and packages through [APM organization policy](https://microsoft.github.io/apm/enterprise/policy-reference/).
+
+### 4. Use and update the skills
+
+Open Claude Code or Codex in the configured project and start a new session. Ask for the skill by name, for example:
+
+```text
+Use Artemis Designer to turn these requirements into a reviewed agent design.
+Use Artemis Developer to implement the approved design.
+Use Artemis Reviewer to review this agent against its design.
+```
+
+APM deploys standalone skills into `.claude/skills/` and `.agents/skills/`; the native Claude plugin namespace in the earlier table does not apply to this installation method. Arch's MCP configuration is written to `.mcp.json` and `.codex/config.toml`. Complete any client trust/connection prompts and connect your own authorized Agent Platform account before live work. Installation alone does not authenticate or authorize platform changes.
+
+For helper commands, resolve `scripts/` relative to the installed skill's `SKILL.md` when plugin-root environment variables are unavailable. Designer supports packages located under hidden directories such as `.agents/` and `.claude/` starting with Artemis `0.7.3`.
+
+The project maintainer can check and apply package updates with:
+
+```bash
+apm outdated
+apm update
+```
+
+Review and validate the changed lockfile and generated files before committing them. Teammates then pull the project changes and run `apm install` again. For a fixed approved release, pin dependencies to a Git commit or tag; see [APM dependency management](https://microsoft.github.io/apm/consumer/manage-dependencies/).
+
+Validation covered all three packages, all four skills and their resources, plus Arch's generated configuration for both clients. It did not include model-driven handoffs, Claude Desktop installation or live Agent Platform authentication and operations.
+
+## Shared content and compatibility
 
 Both catalogs point to the same `plugins/` directories. Skill instructions, Python helpers, references and Arch's `.mcp.json` are shared; only the client manifests and marketplace metadata differ. Codex keeps its existing catalog, interface metadata, install policies and `agents/openai.yaml` files. Claude uses its own manifest and skill command namespace.
 
 Helper examples accept `PLUGIN_ROOT` or Claude's `CLAUDE_PLUGIN_ROOT`. If neither is available, resolve the helper relative to the loaded `SKILL.md`. Helpers require Python 3.10+. Skill delegation uses the host's available tools and retains the documented sequential fallback when subagents are unavailable.
 
-The compatibility release versions are XO Tools `0.4.1`, Artemis `0.7.2`, and Arch `0.2.1`. Artemis `0.7.2` adds the Claude display name while retaining the existing package ID and shared skills. Earlier version descriptions above identify the feature releases. Package validation and discovery checks do not certify model behavior, authentication, or live Agent Platform operations in either client.
+The package versions in this source are XO Tools `0.4.1`, Artemis `0.7.3`, and Arch `0.2.1`. Artemis `0.7.2` adds the Claude display name; `0.7.3` fixes Designer package scanning when the package itself or an ancestor directory is hidden, while still excluding hidden files and folders inside the package. Earlier version descriptions above identify the feature releases. Package validation and discovery checks do not certify model behavior, authentication, or live Agent Platform operations in either client.
 
 For other coding agents, reuse the skill folders only after checking their native installation format and runtime capabilities.
 
