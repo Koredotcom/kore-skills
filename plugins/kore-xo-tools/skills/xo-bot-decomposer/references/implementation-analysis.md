@@ -4,6 +4,8 @@ Read when the source has executable code, SDK hooks, event behavior or routes. T
 
 ## Registration before handler matching
 
+If BotKit usage is stated or evidenced but matching source is missing, ask the user for its source bundle/repository, startup/bootstrap and bot registration, event/webhook handlers, imported project helpers, non-secret configuration templates and release information. Point to the observed hook/node/reference so the request is specific. Also request missing referenced helpers from a partial bundle. Respect an existing deferred/unavailable decision; continue other analysis with the affected implementation paths explicitly incomplete. No BotKit package is needed for a source slice that does not depend on it, and lack of SDK webhook nodes alone cannot rule out global hooks.
+
 Start at package/entrypoint configuration and the actual bootstrap. Trace imports into project registration, selected bot IDs, event map, callback implementation and guards. Distinguish SDK capabilities, unregistered samples, dead/commented paths and imported-but-uncalled code from active project behavior. Custom routes and infrastructure stay inventoried; decide relevance against the requested capability slice.
 
 For every hook, inspect trigger/envelope, ordering, switches, text/NLP effects, context reads/writes, services, injected routes, callback/forward completion and failure/interruption. An `on_agent_transfer` callback that only forwards is pass-through; investigate scripts/channel markup for the real handoff. Global message or end-dialog hooks may affect every child even without child webhook nodes.

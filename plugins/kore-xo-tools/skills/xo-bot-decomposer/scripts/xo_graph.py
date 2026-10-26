@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from universal_config import is_universal
 
 KNOWN_TYPES = {"intent", "entity", "service", "script", "message", "botaction",
                "digitalformnode", "form", "sdkwebhook", "webhook", "agenttransfer",
@@ -22,11 +23,11 @@ def walk(value, pointer=""):
 def unwrap(data):
     if not isinstance(data, dict):
         return None, ""
-    if isinstance(data.get("dialogs"), list):
+    if isinstance(data.get("dialogs"), list) or ("dialogs" not in data and is_universal(data)):
         return data, ""
     for key in ("botDefinition", "appDefinition", "app", "bot"):
         inner = data.get(key)
-        if isinstance(inner, dict) and isinstance(inner.get("dialogs"), list):
+        if isinstance(inner, dict) and (isinstance(inner.get("dialogs"), list) or ("dialogs" not in inner and is_universal(inner))):
             return inner, "/" + key
     return None, ""
 

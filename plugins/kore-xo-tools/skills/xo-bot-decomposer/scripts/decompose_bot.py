@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from xo_coverage import build, digest, gap, write
 from xo_graph import unwrap
+from universal_config import bot_name, identities, is_universal, select_linked
 from xo_export_parser import build_inventory, write_inventory_files, write_metadata_file, _redact_structure, _redact_text, _safe_filename
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
@@ -132,11 +133,11 @@ def discover(source, group, kind):
                     data, prefix = unwrap(obj)
                     role = "definition" if data is not None or p.name.lower() in ("appdefinition.json", "botdefinition.json") else "contract" if kind == "contracts" else "configuration"
                     record.update(role=role, parse_status="parsed", reason="Static JSON evidence")
-                    if data is not None and (any(not isinstance(d, dict) or not isinstance(d.get("nodes", []), list) for d in data["dialogs"]) or not isinstance(data.get("dialogComponents", []), list) or any(not isinstance(c, dict) for c in data.get("dialogComponents", []))):
+                    if data is not None and (any(not isinstance(d, dict) or not isinstance(d.get("nodes", []), list) for d in data.get("dialogs", [])) or not isinstance(data.get("dialogComponents", []), list) or any(not isinstance(c, dict) for c in data.get("dialogComponents", []))):
                         data = None
                         record.update(parse_status="unsupported", reason="Unsupported dialog/component collection shape")
                     if data is not None:
-                        record.update(_definition=data, _prefix=prefix)
+                        record.update(_definition=data, _prefix=prefix, definition_identity_aliases=identities(data), definition_name=bot_name(data, None))
                     record["sanitized_hash"] = digest(json.dumps(_redact_structure(obj), sort_keys=True))
                 elif ext in (".js", ".mjs", ".cjs"):
                     record.update(role="javascript", parse_status="lexical", reason="Lexical candidates; semantic review required", sanitized_hash=digest(_redact_text(text)))
@@ -182,6 +183,7 @@ def main() -> int:
     parser.add_argument("--scope", choices=("full", "goals-only"), default="full")
     parser.add_argument("--universal", action="store_true")
     parser.add_argument("--parent-id")
+    parser.add_argument("--linked-identity", choices=("id", "name"), default="id", help="Use exact names for linked-source discovery only when explicitly requested for damaged IDs")
     args = parser.parse_args()
     inputs = [(args.export, "export")] + [(p, "export") for p in args.additional_export] + [(p, "botkit") for p in args.botkit] + [(p, "companion") for p in args.companion_source] + [(p, "contracts") for p in args.contracts]
     inputs = [(p.expanduser().absolute(), kind) for p, kind in inputs]
@@ -212,31 +214,42 @@ def main() -> int:
                         candidate.update(parse_status="unselected", reason="Definition discovered in companion source; capability scope not selected")
                         intake_gaps.append(("awaiting_scope_decision", candidate["id"], "Companion contains a bot definition; select explicitly as an export to analyze its capability slice."))
                     continue
-                chosen = [a for a in candidates if a["id"] in args.definition] if args.definition else candidates if len(candidates) == 1 or args.all_definitions else []
-                for a in candidates:
-                    if a not in chosen:
-                        a.update(parse_status="unselected", reason="Multiple or unselected definitions require explicit selection")
-                        intake_gaps.append(("awaiting_scope_decision", a["id"], "Definition not selected; no whole-archive completeness claim is valid."))
-                    elif "_definition" not in a:
-                        a.update(parse_status="unsupported", reason="No supported dialogs array")
-                        intake_gaps.append(("unsupported_parse", a["id"], "Definition shape is unsupported."))
-                    else:
-                        version = detect_version(a["_path"], args.xo_version)
-                        route = "XO 10 or earlier" if version == 10 else "XO 11"
-                        try:
-                            inventory = build_inventory(a["_definition"], a["id"], route)
-                        except (AttributeError, TypeError, KeyError, ValueError, RecursionError):
-                            a.update(parse_status="unsupported", reason="Unsupported field shape in definition")
-                            intake_gaps.append(("unsupported_parse", a["id"], "Definition has unsupported field shapes; supported peers remain analyzed."))
-                            continue
-                        exports.append({"data": a["_definition"], "prefix": a["_prefix"], "artifact_id": a["id"], "version_route": route, "inventory": inventory})
                 if not candidates:
                     intake_gaps.append(("unsupported_parse", group, "No supported definition discovered in selected export input."))
-            unknown_selections = set(args.definition) - {a["id"] for a in artifacts}
+            candidates = [a for a in artifacts if a["role"] == "definition" and a["source_kind"] == "export"]
+            if args.definition:
+                chosen_ids = set(args.definition)
+            elif args.all_definitions:
+                chosen_ids = {a["id"] for a in candidates}
+            else:
+                seeds = []
+                for group in sorted({a["source_group"] for a in candidates}):
+                    peers = [a for a in candidates if a["source_group"] == group]
+                    parents = [a for a in peers if is_universal(a.get("_definition", {}))]
+                    seeds.extend(peers if len(peers) == 1 else parents if len(parents) == 1 else [])
+                chosen_ids = select_linked(candidates, seeds, args.linked_identity)
+            for a in candidates:
+                if a["id"] not in chosen_ids:
+                    a.update(parse_status="unselected", reason="Unrelated, ambiguous or explicitly unselected definition requires a scope decision")
+                    intake_gaps.append(("awaiting_scope_decision", a["id"], "Definition not selected; no whole-archive completeness claim is valid."))
+                elif "_definition" not in a:
+                    a.update(parse_status="unsupported", reason="No supported dialog collection or universal configuration")
+                    intake_gaps.append(("unsupported_parse", a["id"], "Definition shape is unsupported."))
+                else:
+                    version = detect_version(a["_path"], args.xo_version)
+                    route = "XO 10 or earlier" if version == 10 else "XO 11"
+                    try:
+                        inventory = build_inventory(a["_definition"], a["id"], route)
+                    except (AttributeError, TypeError, KeyError, ValueError, RecursionError):
+                        a.update(parse_status="unsupported", reason="Unsupported field shape in definition")
+                        intake_gaps.append(("unsupported_parse", a["id"], "Definition has unsupported field shapes; supported peers remain analyzed."))
+                        continue
+                    exports.append({"data": a["_definition"], "prefix": a["_prefix"], "artifact_id": a["id"], "version_route": route, "inventory": inventory})
+            unknown_selections = set(args.definition) - {a["id"] for a in candidates}
             if unknown_selections:
                 raise ValueError("Selected definition ID not found in manifest")
-            universal = args.universal or bool(args.parent_id) or any(e["data"].get("isUniversal") or e["data"].get("childBots") for e in exports)
-            ledger = build(artifacts, exports, args.scope, universal, args.parent_id, args.defer)
+            universal = args.universal or bool(args.parent_id) or any(is_universal(e["data"]) for e in exports)
+            ledger = build(artifacts, exports, args.scope, universal, args.parent_id, args.defer, args.linked_identity)
             for category, source, reason in intake_gaps:
                 gap(ledger, category, [source], [], reason, "Select manifest definition IDs, pass --all-definitions, or provide a supported source.")
             if intake_gaps:
