@@ -28,6 +28,8 @@ Refine `_system_plan.json` before delegating: parent identity where known, child
 
 Assign parent, child and shared-runtime passes with the same selected manifest, ledger schema and status vocabulary. Workers use read-only sources and distinct output directories. Keep parser/tool edits under one coordinator. Use available authorized subagents, queue within concurrency limits, or perform identical sequential passes. Do not create new user-owned chats.
 
+Persist the current plan and each package's notes, progress and handoff in the [analysis workspace](analysis-workspace.md). Workers save small completed units to their assigned directory; the coordinator saves decisions, dependency requests, shared-contract revisions and checkpoints. On continuation, check recorded source/contract revisions and actual worker status before reassigning interrupted packages. Saved complete child outputs remain reusable when their dependencies are unchanged.
+
 ### Exclusive ownership and shared BotKit analysis
 
 The coordinator is the sole dispatcher and shared-ledger writer. The generated plan assigns each selected bot definition to its parent/child package and non-definition companion sources to `shared_runtime`. Refine these assignments before dispatch: one owning package per artifact, including BotKit registrations, helpers and config. Treat identical source copies as a deduplication lead, not permission for independent workers to repeat the same semantic analysis. A tightly coupled group may own several bot definitions; remove those artifacts from their former packages rather than duplicating assignments. Parent routing and BotKit are coordinated baseline passes; child passes depend on both.

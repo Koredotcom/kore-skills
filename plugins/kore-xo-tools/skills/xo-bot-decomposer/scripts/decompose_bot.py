@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from xo_coverage import build, digest, gap, write
 from xo_graph import unwrap
 from universal_config import bot_name, identities, is_universal, select_linked
+from analysis_workspace import is_analysis_workspace, workspace
 from xo_export_parser import build_inventory, write_inventory_files, write_metadata_file, _redact_structure, _redact_text, _safe_filename
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
@@ -50,8 +51,8 @@ def choose_definition(root: Path) -> Path:
     if root.is_file() and root.suffix.lower() == ".json":
         return root
     candidates = []
-    for path in sorted(root.rglob("*.json")):
-        if path.is_symlink():
+    for path in source_paths(root):
+        if path.is_symlink() or not path.is_file() or path.suffix.lower() != ".json":
             continue
         try:
             data, _ = unwrap(json.loads(path.read_text()))
@@ -98,10 +99,28 @@ def detect_version(definition: Path, requested: str | None) -> int:
     return 11 if version is not None and version >= 11 else 10
 
 
-def discover(source, group, kind):
-    paths = sorted(source.rglob("*")) if source.is_dir() else [source]
-    if len(paths) > MAX_FILES:
-        raise ValueError("Source directory exceeds intake member limit")
+def source_paths(source, excluded=None):
+    if not source.is_dir():
+        return [source]
+    if is_analysis_workspace(source):
+        raise ValueError("An analysis workspace is generated output, not an export source")
+    paths, pending = [], [source]
+    while pending:
+        for path in sorted(pending.pop().iterdir()):
+            if path.is_dir() and not path.is_symlink():
+                if is_analysis_workspace(path):
+                    if excluded is not None:
+                        excluded.append(path.relative_to(source).as_posix())
+                    continue
+                pending.append(path)
+            paths.append(path)
+            if len(paths) > MAX_FILES:
+                raise ValueError("Source directory exceeds intake member limit")
+    return sorted(paths)
+
+
+def discover(source, group, kind, excluded=None):
+    paths = source_paths(source, excluded)
     artifacts = []
     total = 0
     for p in paths:
@@ -171,7 +190,7 @@ def render_export(data, name, route, output, inventory=None):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("export", type=Path)
-    parser.add_argument("output", nargs="?", type=Path)
+    parser.add_argument("output", type=Path, help="Fresh persistent evidence directory, normally <analysis-workspace>/evidence/run-001")
     parser.add_argument("--xo-version")
     parser.add_argument("--additional-export", action="append", type=Path, default=[])
     parser.add_argument("--botkit", action="append", type=Path, default=[])
@@ -187,26 +206,39 @@ def main() -> int:
     args = parser.parse_args()
     inputs = [(args.export, "export")] + [(p, "export") for p in args.additional_export] + [(p, "botkit") for p in args.botkit] + [(p, "companion") for p in args.companion_source] + [(p, "contracts") for p in args.contracts]
     inputs = [(p.expanduser().absolute(), kind) for p, kind in inputs]
-    output = args.output.expanduser().resolve() if args.output else Path(tempfile.mkdtemp(prefix="xo-evidence-"))
-    for path, _ in inputs:
-        if not path.exists() or path.is_symlink():
-            parser.error("Input is absent or a symlink")
-        resolved = path.resolve()
-        if output == resolved or output in resolved.parents or (resolved.is_dir() and resolved in output.parents):
-            parser.error("Source and output must not overlap")
+    output = args.output.expanduser().resolve()
+    try:
+        output_workspace = next((p for p in output.parents if is_analysis_workspace(p)), None)
+        if output_workspace:
+            workspace(output_workspace)
+        for path, _ in inputs:
+            if not path.exists() or path.is_symlink():
+                parser.error("Input is absent or a symlink")
+            resolved = path.resolve()
+            if any(is_analysis_workspace(p) for p in (resolved, *resolved.parents) if p.is_dir()):
+                parser.error("Generated analysis files cannot be selected as source inputs")
+            if output == resolved or output in resolved.parents:
+                parser.error("Source and output must not overlap")
+            if resolved.is_dir() and resolved in output.parents:
+                if not output_workspace or resolved not in output_workspace.parents or output.parent != output_workspace / 'evidence':
+                    parser.error("Nested output requires a fresh evidence run in an initialized analysis workspace")
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
     if output.exists() and any(output.iterdir()):
         parser.error("Use a fresh output directory; existing evidence is not overwritten")
     output.mkdir(parents=True, exist_ok=True)
     try:
         with tempfile.TemporaryDirectory(prefix="xo-intake-") as temp:
-            artifacts, exports, intake_gaps = [], [], []
+            artifacts, exports, intake_gaps, intake_exclusions = [], [], [], []
             for i, (source, kind) in enumerate(inputs, 1):
                 group = f"source_{i:03}"
                 if source.suffix.lower() == ".zip":
                     extracted = Path(temp) / group
                     safe_extract(source, extracted)
                     source = extracted
-                found = discover(source, group, kind)
+                excluded = []
+                found = discover(source, group, kind, excluded)
+                intake_exclusions.extend({"source_group": group, "relative_path": relative, "reason": "generated_analysis_workspace"} for relative in sorted(excluded))
                 artifacts.extend(found)
                 candidates = [a for a in found if a["role"] == "definition"]
                 if kind != "export":
@@ -250,6 +282,7 @@ def main() -> int:
                 raise ValueError("Selected definition ID not found in manifest")
             universal = args.universal or bool(args.parent_id) or any(is_universal(e["data"]) for e in exports)
             ledger = build(artifacts, exports, args.scope, universal, args.parent_id, args.defer, args.linked_identity)
+            ledger["intake_exclusions"] = intake_exclusions
             for category, source, reason in intake_gaps:
                 gap(ledger, category, [source], [], reason, "Select manifest definition IDs, pass --all-definitions, or provide a supported source.")
             if intake_gaps:
