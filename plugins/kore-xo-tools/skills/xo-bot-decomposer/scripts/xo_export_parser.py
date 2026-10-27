@@ -670,7 +670,7 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
     component_usage = _component_dialog_map(data)
     graph = discover_graph(data)
     dialog_name_by_id = {
-        dialog.get("_id"): dialog.get("localeData", {}).get("en", {}).get("name", "Unnamed Dialog Task")
+        dialog.get("_id"): dialog.get("localeData", {}).get("en", {}).get("name", dialog.get("name", "Unnamed Dialog Task"))
         for dialog in data.get("dialogs", [])
     }
     default_language = data.get("defaultLanguage", "en")

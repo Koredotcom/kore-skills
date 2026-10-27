@@ -9,6 +9,7 @@ from pathlib import Path
 from source_scan import scan
 from xo_graph import discover_graph, walk
 from xo_export_parser import _redact_structure, _redact_text
+from universal_config import bot_name, enrich, identities, is_universal, parent_source
 
 
 def digest(value):
@@ -28,8 +29,13 @@ def gap(ledger, category, evidence, affected, consequence, next_input, severity=
     return record
 
 
-def build(artifacts, exports, scope="full", universal=False, parent_id=None, deferred=()):
-    ledger = {"schema_version": 2, "scope": scope, "universal": universal, "parent_id": parent_id,
+def build(artifacts, exports, scope="full", universal=False, parent_id=None, deferred=(), linked_identity_mode="id"):
+    parents = [e for e in exports if is_universal(e["data"])]
+    universal = universal or bool(parents)
+    if parent_id is None and len(parents) == 1:
+        data = parents[0]["data"]
+        parent_id = str(data.get("_id") or data.get("botId") or data.get("id") or parents[0]["artifact_id"])
+    ledger = {"schema_version": 2, "scope": scope, "universal": universal, "parent_id": parent_id, "linked_identity_mode": linked_identity_mode,
               "artifacts": [], "bots": [], "node_occurrences": [], "component_definitions": [], "webhooks": [], "events": [],
               "bot_functions": [], "calls": [], "botkit_hooks": [], "registrations": [], "configuration": [],
               "state_contracts": [], "routing_dependencies": [], "executable_evidence": [], "coverage_gaps": [],
@@ -92,9 +98,11 @@ def build(artifacts, exports, scope="full", universal=False, parent_id=None, def
     for export in exports:
         data, aid = export["data"], export["artifact_id"]
         bot_id = str(data.get("_id") or data.get("botId") or data.get("id") or aid)
-        bot = {"id": bot_id, "artifact_id": aid, "name": data.get("name", data.get("botName", bot_id)),
+        bot = {"id": bot_id, "artifact_id": aid, "name": bot_name(data, bot_id),
+               "exported_name": bot_name(data, None),
+               "ref_id": data.get("refId"), "identity_aliases": identities(data), "type": data.get("type"), "is_universal": is_universal(data),
                "version": data.get("xoVersion", data.get("platformVersion", data.get("version"))), "version_route": export["version_route"],
-               "dialogs": [{"id": d.get("_id"), "name": d.get("localeData", {}).get("en", {}).get("name", d.get("name"))} for d in data.get("dialogs", [])]}
+               "dialogs": [{"id": d.get("_id"), "ref_id": d.get("refId"), "name": d.get("localeData", {}).get("en", {}).get("name", d.get("name"))} for d in data.get("dialogs", [])]}
         ledger["bots"].append(bot)
         graph = discover_graph(data, export.get("prefix", ""))
         ledger["discovery"][aid] = graph["discovery"]
@@ -130,7 +138,8 @@ def build(artifacts, exports, scope="full", universal=False, parent_id=None, def
                 gap(ledger, "unknown_backend_semantics", [aid + f"#/dialogComponents/{i}"], [cid], "Service export documents a client, not verified backend policy and response contract.", "Provider schema/fixtures, timeout units, retries, failure and continuation behavior.")
         for pointer, value in walk(data, export.get("prefix", "")):
             key = pointer.rsplit("/", 1)[-1]
-            if isinstance(value, (dict, list)) and re.search(r"event|taskend|onconnect|transfer|fallback", key, re.I):
+            event_root = export.get("prefix", "") + "/botEvents"
+            if not (pointer == event_root or pointer.startswith(event_root + "/")) and isinstance(value, (dict, list)) and re.search(r"event|taskend|onconnect|transfer|fallback", key, re.I):
                 ledger["events"].append({"id": review_item("event", aid, pointer, [bot_id]), "bot_id": bot_id,
                     "source": aid + "#" + pointer, "configuration": value, "record_kind": "binding_candidate" if isinstance(value, dict) and any(k in value for k in ("target", "taskId", "dialogId", "enabled", "enable")) else "configuration_container", "binding": "exported_only"})
             if isinstance(value, str):
@@ -192,17 +201,19 @@ def build(artifacts, exports, scope="full", universal=False, parent_id=None, def
         gap(ledger, "unverified_runtime_binding", [wh["id"]], [wh["name"]], "Effective SDK registration and callback delivery are not established by source.", "Deployment/version and runtime trace evidence.", "runtime")
     ledger["webhooks"] = list(webhook_map.values())
     for route in ledger["routing_dependencies"]:
-        exact = [(b, d) for b in ledger["bots"] for d in b["dialogs"] if route["target"] and route["target"] in (d["id"], d["name"])]
-        own = [(b, d) for b, d in exact if route["requested_owner"] in (b["id"], b["name"])]
+        exact = [(b, d) for b in ledger["bots"] for d in b["dialogs"] if route["target"] and route["target"] in (d["id"], d.get("ref_id"), d["name"])]
+        own = [(b, d) for b, d in exact if route["requested_owner"] in (b["id"], *b["identity_aliases"])]
         route["source_candidates"] = [{"bot_id": b["id"], "dialog_id": d["id"]} for b, d in exact]
-        route["status"] = "matched_source" if len(own) == 1 and route["comparison"] == "exact_id" else "owner_mismatch" if exact and route["requested_owner"] and not own else "dynamic_or_unverified"
+        route["status"] = "matched_source" if len(own) == 1 and route["comparison"] == "exact_id" and route["target"] in (own[0][1]["id"], own[0][1].get("ref_id")) else "owner_mismatch" if exact and route["requested_owner"] and not own else "dynamic_or_unverified"
         if route["status"] != "matched_source":
             gap(ledger, "incompatible_artifact_set" if route["status"] == "owner_mismatch" else "unresolved_dynamic_target", [route["source"]], [route["target"]],
                 "Target source availability does not establish requested owner, dispatcher semantics or resume-state compatibility.", "Confirm exact registry/dispatch semantics and entry/return state contract; preserve intended scope.")
+    enrich(ledger, exports, review_item, gap)
     for name in deferred:
         gap(ledger, "missing_source", ["user-deferred"], [name], "Required or proposed input is deferred; its behavior has not been inferred.", "Supply input or record an explicit replacement/exclusion decision.")
     if universal:
-        gap(ledger, "present_but_not_inspected" if parent_id else "missing_source", ["selected-system"], [parent_id or "parent/registry"], "Child completion does not establish shared runtime, parent registry or end-to-end journeys.", "Review parent registry/bootstrap, scoped child handoffs and shared hooks; reconcile ownership, state, route overlap, return and terminal journeys.")
+        parent_present = any(parent_id in (b["id"], *b["identity_aliases"]) for b in ledger["bots"]) if parent_id else bool(parents)
+        gap(ledger, "present_but_not_inspected" if parent_present else "missing_source", ["selected-system"], [parent_id or "parent/registry"], "Child completion does not establish shared runtime, parent registry or end-to-end journeys.", "Review parent registry/bootstrap, scoped child handoffs and shared hooks; reconcile ownership, state, route overlap, return and terminal journeys.")
     if scope == "goals-only":
         gap(ledger, "intentionally_excluded", ["requested-goals-only-scope"], [f"{len(ledger['events'])} event records", f"{len(ledger['botkit_hooks'])} hook candidates", f"{len(ledger['executable_evidence'])} executable records"],
             "Technical support behavior remains inventoried but a goal-only report is not a full implementation specification.", "Expand scope if implementation parity is required.")
@@ -213,7 +224,7 @@ def build(artifacts, exports, scope="full", universal=False, parent_id=None, def
     for variants in fields.values():
         if len(variants) > 1:
             gap(ledger, "state_contract_ambiguity", sorted(variants), sorted(variants), "Case-distinct state paths may describe different keys; producer/consumer compatibility needs review.", "Trace exact keys, aliases, initialization, resets and failure-to-success paths.")
-    ledger["counts"] = {key: len(ledger[key]) for key in ("artifacts", "bots", "node_occurrences", "component_definitions", "webhooks", "events", "bot_functions", "botkit_hooks", "review_items")}
+    ledger["counts"] = {key: len(ledger[key]) for key in ("artifacts", "bots", "node_occurrences", "component_definitions", "webhooks", "events", "bot_functions", "botkit_hooks", "review_items", "universal_parents", "registry_entries", "linked_bots", "event_bindings")}
     ledger["counts"]["event_binding_candidates"] = sum(e.get("record_kind") == "binding_candidate" for e in ledger["events"])
     ledger["counts"]["event_configuration_containers"] = sum(e.get("record_kind") == "configuration_container" for e in ledger["events"])
     ledger["counts"]["webhook_occurrences"] = sum(len(w["occurrences"]) for w in ledger["webhooks"])
@@ -225,7 +236,8 @@ def build(artifacts, exports, scope="full", universal=False, parent_id=None, def
 def coverage_section(ledger):
     def cell(value):
         return str(value).replace("|", "\\|").replace("\n", " ")
-    lines = ["## Coverage and missing inputs", "", f"**Boundary:** {ledger['scope']}; {len(ledger['artifacts'])} selected artifacts; universal system: {ledger['universal']}.",
+    identity_note = " Temporary linked-source identity basis: exact names (user-selected); original IDs retained." if ledger.get("linked_identity_mode") == "name" else ""
+    lines = ["## Coverage and missing inputs", "", f"**Boundary:** {ledger['scope']}; {len(ledger['artifacts'])} selected artifacts; universal system: {ledger['universal']}.{identity_note}",
              f"**Static document coverage:** {ledger['status']['static_document_coverage']}. **Implementation dependencies:** {ledger['status']['implementation_dependencies']}.",
              f"**Source-release compatibility:** {ledger['status']['source_release_compatibility']}. **Runtime validation:** {ledger['status']['runtime_validation']}.",
              "", "Inventory is not semantic analysis or deployed behavior. Executable-source matches are lexical candidates until reviewed.", "",
@@ -249,11 +261,28 @@ def write(ledger, output):
     for name, title in (("_analysis_draft.md", "Business goal decomposition"), ("_technical_reference_draft.md", "Technical reference")):
         (output / name).write_text(f"# {title}\n\n{section}\n**Source:** selected artifact manifest\n\nThis is an evidence-backed draft boundary. Complete semantic analysis and item dispositions before delivery.\n")
     if ledger["universal"]:
+        packages = []
+        for i, bot in enumerate(ledger["bots"], 1):
+            role = "parent" if parent_source(bot, ledger["parent_id"]) else "child"
+            package_id = f"{role}_{i:03}"
+            packages.append({"id": package_id, "role": role, "bot_id": bot["id"], "artifact_id": bot["artifact_id"],
+                "owned_artifact_ids": [bot["artifact_id"]],
+                "output_directory": f"{'parents' if role == 'parent' else 'children'}/{package_id}", "status": "pending"})
+        parent_packages = [p["id"] for p in packages if p["role"] == "parent"]
+        for package in packages:
+            package["depends_on"] = parent_packages + ["shared_runtime"] if package["role"] == "child" else []
+        shared_artifacts = [a["id"] for a in ledger["artifacts"] if a["role"] not in ("definition", "asset") and a.get("source_hash")]
         plan = {"schema_version": 2, "manifest": "_artifact_manifest.json", "parent_id": ledger["parent_id"],
-            "work_packages": [{"id": f"child_{i:03}", "bot_id": b["id"], "artifact_id": b["artifact_id"], "output_directory": f"children/child_{i:03}", "status": "pending"} for i, b in enumerate(ledger["bots"], 1)] +
-                [{"id": "shared_runtime", "output_directory": "shared_runtime", "status": "pending"}, {"id": "coordinator", "output_directory": "system_review", "status": "pending"}],
+            "linked_identity_mode": ledger.get("linked_identity_mode", "id"),
+            "work_packages": packages +
+                [{"id": "shared_runtime", "role": "shared_runtime", "owned_artifact_ids": shared_artifacts, "depends_on": [], "output_directory": "shared_runtime", "status": "pending"},
+                 {"id": "coordinator", "role": "coordinator", "owned_artifact_ids": [], "depends_on": [p["id"] for p in packages] + ["shared_runtime"], "output_directory": "system_review", "status": "pending"}],
+            "ownership_policy": {"assignments_locked": False, "shared_contract_revision": None, "shared_contract_refs": [],
+                "workers_may_expand_scope": False, "workers_may_delegate": False,
+                "shared_ledger_writer": "coordinator", "dependency_requests_to": "coordinator"},
+            "linked_source_dependencies": ledger.get("linked_bots", []), "event_bindings": ledger.get("event_bindings", []),
             "execution": "Sequential or delegated with identical handoff schema; sources read-only; one tooling owner.",
-            "handoff_required": ["source_identity", "capability_scope", "goals_events", "entry_assumptions", "routes_returns", "state_contracts", "dependencies", "exclusions", "gap_ids", "quality"],
+            "handoff_required": ["work_package_id", "analyzed_artifacts", "shared_contract_revision", "source_identity", "capability_scope", "goals_events", "entry_assumptions", "routes_returns", "state_contracts", "dependencies", "exclusions", "gap_ids", "quality"],
             "journey_required": ["entry", "identity_authorization", "dispatch", "child_execution", "shared_hooks", "errors_retries", "interrupt_resume", "completion_transfer"]}
         (output / "_system_plan.json").write_text(json.dumps(plan, indent=2, sort_keys=True) + "\n")
         (output / "_system_review_draft.md").write_text("# Universal system review\n\n" + section + "\nComplete coordinator reconciliation: responsibility map, route/entry-return matrix, shared-state lifecycle, implementation ledger, journey coverage and scope decisions. Child, shared-runtime and end-to-end statuses remain separate.\n")

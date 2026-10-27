@@ -1,6 +1,6 @@
 {
   "name": "kore-xo-tools",
-  "version": "0.4.1",
+  "version": "0.6.0",
   "description": "Analyze Kore.ai XO bot exports and create clear business and technical documentation.",
   "author": {
     "name": "Kore.ai"

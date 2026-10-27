@@ -22,6 +22,27 @@ def validate(ledger, documents):
         if ledger["counts"].get(key) != len(ledger[key]):
             errors.append(f"Count mismatch: {key}")
     item_ids = set(ids)
+    # Optional additions to schema 2 retain compatibility with earlier ledgers.
+    for key in ("universal_parents", "registry_entries", "linked_bots", "event_bindings"):
+        if key in ledger:
+            if ledger["counts"].get(key) != len(ledger[key]):
+                errors.append(f"Count mismatch: {key}")
+            if any(record["id"] not in item_ids for record in ledger[key]):
+                errors.append(f"Missing review dispositions for {key}")
+    for aid, discovered in ledger.get("universal_discovery", {}).items():
+        entries = [r for r in ledger.get("registry_entries", []) if r["artifact_id"] == aid]
+        linked = [r for r in ledger.get("linked_bots", []) if r["parent_artifact_id"] == aid]
+        bindings = [r for r in ledger.get("event_bindings", []) if r["source"].split("#")[0] == aid]
+        events = [r for r in bindings if r["event_name"] != "defaultDialogId"]
+        defaults = [r for r in bindings if r["event_name"] == "defaultDialogId"]
+        if (len(entries) != discovered["registry_entries"] or len(linked) != discovered["linked_bot_identities"]
+                or len(events) != discovered["configured_events"] or len(defaults) != discovered["default_settings"]):
+            errors.append(f"Universal discovery and normalized totals do not reconcile: {aid}")
+        for field, count_key in (("_id", "distinct_id_values"), ("name", "distinct_name_values")):
+            values = {r["definition"][field] for r in entries if isinstance(r.get("definition"), dict)
+                      and isinstance(r["definition"].get(field), str) and r["definition"][field].strip()}
+            if count_key in discovered and len(values) != discovered[count_key]:
+                errors.append(f"Universal {count_key} does not reconcile: {aid}")
     discovered_occurrences = sum(d["expanded_occurrences"] for d in ledger["discovery"].values())
     discovered_components = sum(d["component_definitions"] for d in ledger["discovery"].values())
     if discovered_occurrences != len(ledger["node_occurrences"]) or discovered_components != len(ledger["component_definitions"]):
