@@ -21,7 +21,8 @@ from xo_coverage import build, digest, gap, write
 from xo_graph import unwrap
 from universal_config import bot_name, identities, is_universal, select_linked
 from analysis_workspace import is_analysis_workspace, workspace
-from xo_export_parser import build_inventory, write_inventory_files, write_metadata_file, _redact_structure, _redact_text, _safe_filename
+from xo_export_parser import build_inventory, write_inventory_files, write_metadata_file, _redact_structure, _redact_text
+from xo_markdown import write_dialog_markdown
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 MAX_BYTES = 256 * 1024 * 1024
@@ -173,18 +174,7 @@ def render_export(data, name, route, output, inventory=None):
     inventory = _redact_structure(inventory if inventory is not None else build_inventory(data, name, route))
     write_inventory_files(inventory, str(output))
     write_metadata_file(_redact_structure(data), str(output))
-    index = ["# Extracted dialog index", "", "All dialogs retained; classification is separate from implementation coverage.", "", "| Dialog | ID | Evidence |", "|---|---|---|"]
-    combined = []
-    for i, dialog in enumerate(inventory["dialogs"], 1):
-        filename = f"dialog_{i:04}_{_safe_filename(dialog['name'])}.md"
-        lines = [f"# {dialog['name']}", "", f"Source ID: `{dialog['id']}`", f"Hidden: {dialog['is_hidden']}; system-name hint: {dialog['ignored_system_intent']}", "",
-                 "```json", json.dumps(dialog, indent=2, ensure_ascii=False), "```", "", "See _inventory.json node_occurrences for full sanitized node/component bodies and original/expanded pointers."]
-        text = "\n".join(lines) + "\n"
-        (output / filename).write_text(text)
-        combined.append(text)
-        index.append(f"| {dialog['name']} | {dialog['id']} | [{filename}]({filename}) |")
-    (output / "_index.md").write_text("\n".join(index) + "\n")
-    (output / "_all_dialogs.md").write_text("\n".join(combined))
+    write_dialog_markdown(inventory, output)
 
 
 def main() -> int:

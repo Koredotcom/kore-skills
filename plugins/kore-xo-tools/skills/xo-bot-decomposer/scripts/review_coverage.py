@@ -23,7 +23,7 @@ def validate(ledger, documents):
             errors.append(f"Count mismatch: {key}")
     item_ids = set(ids)
     # Optional additions to schema 2 retain compatibility with earlier ledgers.
-    for key in ("universal_parents", "registry_entries", "linked_bots", "event_bindings"):
+    for key in ("universal_parents", "registry_entries", "linked_bots", "event_bindings", "unexpanded_nodes"):
         if key in ledger:
             if ledger["counts"].get(key) != len(ledger[key]):
                 errors.append(f"Count mismatch: {key}")
@@ -47,6 +47,8 @@ def validate(ledger, documents):
     discovered_components = sum(d["component_definitions"] for d in ledger["discovery"].values())
     if discovered_occurrences != len(ledger["node_occurrences"]) or discovered_components != len(ledger["component_definitions"]):
         errors.append("Discovery and normalized graph totals do not reconcile")
+    if "unexpanded_nodes" in ledger and sum(d.get("unexpanded_nodes", 0) for d in ledger["discovery"].values()) != len(ledger["unexpanded_nodes"]):
+        errors.append("Unexpanded physical node totals do not reconcile")
     for key in ("node_occurrences", "component_definitions", "events", "executable_evidence"):
         if any(record["id"] not in item_ids for record in ledger[key]):
             errors.append(f"Missing review dispositions for {key}")

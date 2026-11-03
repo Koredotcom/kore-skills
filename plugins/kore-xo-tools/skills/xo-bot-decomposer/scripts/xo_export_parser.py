@@ -413,7 +413,9 @@ def parse_condition(condition_obj):
     if not isinstance(condition_obj, dict) or not condition_obj:
         return "Unresolved condition: " + json.dumps(condition_obj, sort_keys=True)
     if "tests" in condition_obj:
-        op = str(condition_obj.get("conjoin", "UNRESOLVED CONJUNCTION")).upper()
+        if not isinstance(condition_obj["tests"], list) or not condition_obj["tests"]:
+            return "Unresolved condition: " + json.dumps(condition_obj, sort_keys=True)
+        op = str(condition_obj.get("conjoin", "[missing]")).upper()
         if op not in ("AND", "OR"):
             op = "UNRESOLVED CONJUNCTION " + op
         return "(" + (" " + op + " ").join(parse_condition(c) for c in condition_obj["tests"]) + ")"
@@ -666,7 +668,9 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
     names, and descriptions remain reasoning tasks for the analyst.
     """
     components = data.get("dialogComponents", [])
-    component_by_id = {component.get("_id"): component for component in components}
+    component_by_id = {}
+    for component in components:
+        component_by_id.setdefault(component.get("_id"), component)
     component_usage = _component_dialog_map(data)
     graph = discover_graph(data)
     dialog_name_by_id = {
@@ -679,8 +683,8 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
 
     dialogs: List[Dict[str, Any]] = []
     subdialog_calls: List[Dict[str, Any]] = []
-    for dialog in data.get("dialogs", []):
-        name = dialog_name_by_id.get(dialog.get("_id"), "Unnamed Dialog Task")
+    for dialog_index, dialog in enumerate(data.get("dialogs", [])):
+        name = dialog.get("localeData", {}).get("en", {}).get("name", dialog.get("name", "Unnamed Dialog Task"))
         node_name_by_id = {
             node.get("nodeId"): component_by_id.get(node.get("componentId"), {}).get(
                 "name", node.get("type", "unnamed")
@@ -696,9 +700,9 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
             default_bot_lang=default_language,
         )
         nodes: List[Dict[str, Any]] = []
-        for occurrence in [o for o in graph["node_occurrences"] if o["dialog_id"] == dialog.get("_id")]:
+        for occurrence in [o for o in graph["node_occurrences"] if o["dialog_pointer"] == f"/dialogs/{dialog_index}"]:
             node = occurrence["node"]
-            component = component_by_id.get(node.get("componentId"), {})
+            component = occurrence["component"]
             linked_dialog_id = component.get("dialogId") if node.get("type") == "intent" else None
             linked_dialog_name = None
             if linked_dialog_id and linked_dialog_id != dialog.get("_id"):
@@ -720,8 +724,8 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
                     "transitions_raw": node.get("transitions", []),
                     "node_id": node.get("nodeId"),
                     "component_id": node.get("componentId"),
-                    "type": node.get("type", "unknown"),
-                    "name": component.get("name", node.get("type", "unnamed")),
+                    "type": occurrence["type"],
+                    "name": occurrence["name"],
                     "description": component.get("localeData", {}).get("en", {}).get("desc", ""),
                     "called_dialog": linked_dialog_name,
                     "transitions": parse_transitions(node.get("transitions", []), node_name_by_id),
@@ -730,6 +734,7 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
         dialogs.append(
             {
                 "id": dialog.get("_id"),
+                "source_pointer": f"/dialogs/{dialog_index}",
                 "name": name,
                 "ignored_system_intent": name.casefold() in IGNORED_INTENTS,
                 "is_hidden": bool(dialog.get("isHidden", False)),
@@ -829,6 +834,8 @@ def build_inventory(data: Dict[str, Any], source_name: str, version_route: str) 
         "schema_version": 2,
         "discovery": graph["discovery"],
         "node_occurrences": graph["node_occurrences"],
+        "component_definitions": graph["component_definitions"],
+        "unexpanded_nodes": graph["unexpanded_nodes"],
         "graph_issues": graph["graph_issues"],
         "source": source_name,
         "version_route": version_route,

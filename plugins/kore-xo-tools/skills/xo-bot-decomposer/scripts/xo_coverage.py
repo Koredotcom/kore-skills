@@ -36,7 +36,7 @@ def build(artifacts, exports, scope="full", universal=False, parent_id=None, def
         data = parents[0]["data"]
         parent_id = str(data.get("_id") or data.get("botId") or data.get("id") or parents[0]["artifact_id"])
     ledger = {"schema_version": 2, "scope": scope, "universal": universal, "parent_id": parent_id, "linked_identity_mode": linked_identity_mode,
-              "artifacts": [], "bots": [], "node_occurrences": [], "component_definitions": [], "webhooks": [], "events": [],
+              "artifacts": [], "bots": [], "node_occurrences": [], "component_definitions": [], "unexpanded_nodes": [], "webhooks": [], "events": [],
               "bot_functions": [], "calls": [], "botkit_hooks": [], "registrations": [], "configuration": [],
               "state_contracts": [], "routing_dependencies": [], "executable_evidence": [], "coverage_gaps": [],
               "review_items": [], "discovery": {}, "status": {"parser_execution": "completed", "static_document_coverage": "pending_review",
@@ -108,6 +108,9 @@ def build(artifacts, exports, scope="full", universal=False, parent_id=None, def
         ledger["discovery"][aid] = graph["discovery"]
         for issue in graph["graph_issues"]:
             gap(ledger, "unsupported_parse" if "unsupported" in issue["kind"] or "limit" in issue["kind"] else "unresolved_reference", [aid + "#" + issue["pointer"]], [issue.get("dialog_id")], issue["kind"], "Inspect source shape/reference and account for the affected execution path.")
+        for node in graph["unexpanded_nodes"]:
+            ledger["unexpanded_nodes"].append({**node, "artifact_id": aid,
+                "id": review_item("unexpanded_node", aid, node["source_pointer"], [])})
         for occurrence in graph["node_occurrences"]:
             o = {**occurrence, "bot_id": bot_id, "artifact_id": aid}
             o["id"] = review_item("node_occurrence", aid, o["occurrence_path"], [o["dialog_id"]])
@@ -128,8 +131,9 @@ def build(artifacts, exports, scope="full", universal=False, parent_id=None, def
                     "requested_owner": c.get("botId", bot_id), "target": c["dialogId"], "comparison": "exact_id", "status": "unresolved", "return_contract": "unverified"})
         for i, c in enumerate(data.get("dialogComponents", [])):
             cid = c.get("_id")
-            ledger["component_definitions"].append({"id": review_item("component", aid, f"/dialogComponents/{i}", []), "artifact_id": aid, "component_id": cid,
-                "type": c.get("type"), "definition": c, "occurrences": [o["id"] for o in ledger["node_occurrences"] if o["artifact_id"] == aid and o["component_id"] == cid]})
+            definition = graph["component_definitions"][i]
+            ledger["component_definitions"].append({**definition, "id": review_item("component", aid, definition["source_pointer"], []), "artifact_id": aid,
+                "type": c.get("type"), "occurrences": [o["id"] for o in ledger["node_occurrences"] if o["artifact_id"] == aid and o["component_pointer"] == definition["source_pointer"]]})
             if str(c.get("type", "")).lower() in ("sdkwebhook", "webhook") and (aid, cid) not in webhook_map:
                 webhook_map[(aid, cid)] = {"id": stable_id("WH", aid, cid), "bot_id": bot_id, "artifact_id": aid,
                     "component_id": cid, "name": c.get("name"), "type": c.get("type"), "occurrences": [],
@@ -224,7 +228,7 @@ def build(artifacts, exports, scope="full", universal=False, parent_id=None, def
     for variants in fields.values():
         if len(variants) > 1:
             gap(ledger, "state_contract_ambiguity", sorted(variants), sorted(variants), "Case-distinct state paths may describe different keys; producer/consumer compatibility needs review.", "Trace exact keys, aliases, initialization, resets and failure-to-success paths.")
-    ledger["counts"] = {key: len(ledger[key]) for key in ("artifacts", "bots", "node_occurrences", "component_definitions", "webhooks", "events", "bot_functions", "botkit_hooks", "review_items", "universal_parents", "registry_entries", "linked_bots", "event_bindings")}
+    ledger["counts"] = {key: len(ledger[key]) for key in ("artifacts", "bots", "node_occurrences", "component_definitions", "unexpanded_nodes", "webhooks", "events", "bot_functions", "botkit_hooks", "review_items", "universal_parents", "registry_entries", "linked_bots", "event_bindings")}
     ledger["counts"]["event_binding_candidates"] = sum(e.get("record_kind") == "binding_candidate" for e in ledger["events"])
     ledger["counts"]["event_configuration_containers"] = sum(e.get("record_kind") == "configuration_container" for e in ledger["events"])
     ledger["counts"]["webhook_occurrences"] = sum(len(w["occurrences"]) for w in ledger["webhooks"])
