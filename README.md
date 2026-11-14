@@ -24,7 +24,7 @@ The skill processes supplied files locally, redacts likely credential values fro
 
 ### Artemis
 
-Installs three skills: `artemis-designer` creates and reviews governed functional, experience and technical designs; `artemis-developer` implements or repairs Agent Platform projects; `artemis-reviewer` reviews built agents against their design through experience and performance specialists. Designer preserves wave scope and traceability; Developer reuses that design and confirms a concise architecture before building one complete use case at a time.
+Installs three skills: `artemis-designer` creates and reviews governed functional, experience and technical designs; `artemis-developer` implements or repairs Agent Platform projects; `artemis-reviewer` reviews built agents against their design through experience and performance specialists. Designer maintains an active design-index checklist through drafting, validation, approval and finalization while preserving separate use-case, experience and technical files, wave scope and traceability; Developer reuses that design and confirms a concise architecture before building one complete use case at a time.
 
 Developer prefers supported native ABL logic and HTTP/API tools, uses Code Tools only for justified exceptions, and balances useful response time with conversational quality. It includes self-contained implementation references, a diagram-based architecture brief, bounded delegation and checkpoint/resume guidance, plus a read-only Python 3.10+ snapshot helper. Live changes and tests use the user's available authorized Arch/platform tools; offline preparation remains possible with evidence gaps disclosed. Deployment and sharing require explicit authorization.
 
@@ -209,7 +209,7 @@ Both catalogs point to the same `plugins/` directories. Skill instructions, Pyth
 
 Helper examples accept `PLUGIN_ROOT` or Claude's `CLAUDE_PLUGIN_ROOT`. If neither is available, resolve the helper relative to the loaded `SKILL.md`. Helpers require Python 3.10+. Skill delegation uses the host's available tools and retains the documented sequential fallback when subagents are unavailable.
 
-The package versions in this source are XO Tools `0.6.1`, Artemis `0.7.3`, and Arch `0.2.1`. Artemis `0.7.2` adds the Claude display name; `0.7.3` fixes Designer package scanning when the package itself or an ancestor directory is hidden, while still excluding hidden files and folders inside the package. Earlier version descriptions above identify the feature releases. Package validation and discovery checks do not certify model behavior, authentication, or live Agent Platform operations in either client.
+The package versions in this source are XO Tools `0.6.1`, Artemis `0.8.0`, and Arch `0.2.1`. Artemis `0.8.0` strengthens project-planning and functional/technical-design discovery and adds persistent completion tracking with advisory checklist checks. Artemis `0.7.2` adds the Claude display name; `0.7.3` fixes Designer package scanning when the package itself or an ancestor directory is hidden, while still excluding hidden files and folders inside the package. Earlier version descriptions above identify the feature releases. Package validation and discovery checks do not certify model behavior, authentication, or live Agent Platform operations in either client.
 
 For other coding agents, reuse the skill folders only after checking their native installation format and runtime capabilities.
 

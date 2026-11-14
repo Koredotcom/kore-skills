@@ -679,6 +679,59 @@ def validate_traceability(documents: list[dict[str, Any]]) -> tuple[list[str], d
     return warnings, inventory
 
 
+def validate_checklist(documents: list[dict[str, Any]]) -> list[str]:
+    """Check recorded progress, not the truth of evidence or semantic coverage."""
+    index = next((doc for doc in documents if doc["path"] == "00-design-index.md"), None)
+    if index is None:
+        return []  # Missing index is reported by manifest validation.
+    section = section_text(index["text"], "Design Completion Checklist")
+    table = first_table_in_section(index["text"], "Design Completion Checklist")
+    rows = rows_by_normalized_header(table)
+    if not rows:
+        return ["Index has no Design Completion Checklist tasks"]
+
+    warnings: list[str] = []
+    if not re.search(r"\*\*Finalization scope:\*\*[ \t]*\S", section):
+        warnings.append("Design Completion Checklist has no finalization scope")
+    stages = {"Discovery", "Draft", "Validation", "Approval", "Finalization"}
+    statuses = {"Pending", "In progress", "Blocked", "Complete", "Deferred", "Not applicable"}
+    required = {"task", "stage", "scope", "status", "evidence or rationale", "next action / owner", "updated"}
+    headers = {header.strip().lower() for header in table[0]}
+    missing = sorted(required - headers)
+    if missing:
+        warnings.append("Design Completion Checklist missing columns: " + ", ".join(missing))
+    missing_stages = sorted(stages - {row.get("stage", "") for row in rows})
+    if missing_stages:
+        warnings.append("Design Completion Checklist missing stages: " + ", ".join(missing_stages))
+
+    finalization_complete = False
+    unfinished: list[str] = []
+    for number, row in enumerate(rows, 1):
+        task = row.get("task", "") or f"row {number}"
+        label = f"Checklist task '{task}'"
+        for field in ("task", "scope", "next action / owner"):
+            if not row.get(field, ""):
+                warnings.append(f"{label} has no {field}")
+        stage, status = row.get("stage", ""), row.get("status", "")
+        if stage not in stages:
+            warnings.append(f"{label} has invalid stage: {stage or '<missing>'}")
+        if status not in statuses:
+            warnings.append(f"{label} has invalid status: {status or '<missing>'}")
+        if not DATE_RE.fullmatch(row.get("updated", "")):
+            warnings.append(f"{label} has invalid updated date")
+        if status in {"Complete", "Deferred", "Not applicable"} and not row.get("evidence or rationale", ""):
+            warnings.append(f"{label} has no completion evidence or disposition rationale")
+        if stage == "Finalization" and status in {"Deferred", "Not applicable"}:
+            warnings.append(f"{label} must remain unfinished until its scoped finalization gate is met")
+        if stage == "Finalization" and status == "Complete":
+            finalization_complete = True
+        elif status not in {"Complete", "Deferred", "Not applicable"}:
+            unfinished.append(task)
+    if finalization_complete and unfinished:
+        warnings.append("Design marked finalized with unfinished checklist tasks: " + ", ".join(unfinished))
+    return warnings
+
+
 def inspect_package(package: Path) -> dict[str, Any]:
     if not package.is_dir():
         raise OSError(f"package directory not found: {package}")
@@ -694,6 +747,7 @@ def inspect_package(package: Path) -> dict[str, Any]:
     if not any(doc["path"] == "01-agent-definition.md" for doc in documents):
         warnings.append("Missing required 01-agent-definition.md")
     warnings.extend(validate_manifest(package, documents))
+    warnings.extend(validate_checklist(documents))
     trace_warnings, trace_inventory = validate_traceability(documents)
     warnings.extend(trace_warnings)
     for doc in documents:

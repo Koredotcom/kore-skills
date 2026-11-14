@@ -1,6 +1,6 @@
 ---
 name: artemis-designer
-description: Guide a Kore.ai agent from discovery material or an initial idea to a governed, modular enterprise design package. Use for guided discovery, drafting, updating, design review, gap analysis, wave readiness, or an implementation handoff. Do not estimate effort. Create or modify a Kore.ai project only after an explicit implementation request using available platform tools.
+description: Plan and design Kore.ai Agent Platform (Artemis) projects. Create, review, or update functional designs, technical designs, use-case specifications, and voice or digital experience designs as a governed multi-file package. Use for project planning from an idea or discovery material, gap analysis, design finalization, wave readiness, or implementation handoff. Design-only work does not authorize building or changing a project. Do not estimate effort.
 ---
 
 # Artemis Designer
@@ -89,12 +89,20 @@ Omit category files that are not applicable and record that decision in the inde
 Work incrementally in this order:
 
 1. Inventory the supplied evidence and distinguish confirmed scope from proposals.
-2. Write the index, agent definition, and first Wave 1 use-case file as the minimum governed package. Register only files that exist, and include only identifiers already defined or created in the same increment.
+2. Write the index with its active Design Completion Checklist, agent definition, and first Wave 1 use-case file as the minimum governed package. Register only files that exist, and include only identifiers already defined or created in the same increment.
 3. Run the checker immediately and correct foundational metadata, link, identifier, prioritization, and wave warnings before expanding the package.
-4. Create additional use-case, experience, and technical documents in small independent increments. Read each category guide immediately before that category and update the index with the same increment.
-5. Run the checker after each material increment, then reconcile cross-document facts and perform the final semantic review.
+4. Create additional use-case, experience, and technical documents in small independent increments. Read each category guide immediately before that category and update the index and checklist with the same increment.
+5. Run the checker after each material increment, record validation evidence in the checklist, then reconcile cross-document facts and perform the final semantic review.
 
 Do not delay all writes while designing a warning-free final package in memory. A complete, evidence-labelled working draft is the first checkpoint; refinement follows validation. When a later-wave use case receives a `UC-###`, create at least its governed skeletal use-case file so the identifier has one canonical definition.
+
+## Maintain the active completion checklist
+
+Use the [index guide's checklist contract](references/design-index-guide.md#active-checklist-lifecycle) from the first increment through finalization. Track discovery, each use case, applicable experience and technical documents, structural and semantic validation, approval, and finalization. Keep drafting, validation, and approval as separate tasks; a written file is not evidence of the latter two.
+
+Update task status, evidence, next action/owner, and date after each material increment, check, or decision and before handing work back. On resume, read the saved index and checklist first, reconcile them with current files and evidence, and continue unfinished work. When a change invalidates earlier validation or approval, reopen the affected tasks and record the prior baseline in change history. Add the checklist when updating an older modular package; do not fabricate past completion evidence or rewrite legacy inputs during review-only work.
+
+The checklist records progress and links; design detail stays in the separate use-case, experience, and technical files. Keep any chat task list synchronized with this persistent source. Before calling a design finalized, reconcile the checklist against the scoped deliverables and apply the [finalization gate](references/review-readiness-guide.md#design-finalization-gate). Report unresolved work explicitly when delivering a draft or handing off with tracked gaps.
 
 ## Govern Wave 1
 
@@ -132,7 +140,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/artemis-designer/scripts/c
   --package "<agent-slug>-design"
 ```
 
-Use `PLUGIN_ROOT` in Codex or `CLAUDE_PLUGIN_ROOT` in Claude Code for the installed plugin directory. If neither is available, resolve the script relative to this `SKILL.md`. The checker verifies package structure, metadata, links, identifiers, manifest consistency, wave alignment, and traceability. It never replaces semantic review.
+Use `PLUGIN_ROOT` in Codex or `CLAUDE_PLUGIN_ROOT` in Claude Code for the installed plugin directory. If neither is available, resolve the script relative to this `SKILL.md`. The checker verifies package structure, metadata, links, identifiers, manifest consistency, wave alignment, traceability, and checklist consistency. Checklist warnings cover missing stages, invalid states, absent completion evidence/rationale, and finalization with unfinished tasks; they do not verify evidence truth, approval authority, or semantic coverage. It remains advisory and never replaces semantic review.
 
 ## Prepare the implementation handoff
 
