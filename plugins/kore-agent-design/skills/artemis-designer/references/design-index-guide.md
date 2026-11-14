@@ -55,6 +55,21 @@ Use this structure for `00-design-index.md`:
 |---|---|---|---|---|---|
 | FND-001 | <platform, environment, channel, identity, integration, governance, or operational foundation> | Wave 1 | Proposed | <dependencies> | <evidence> |
 
+## Design Completion Checklist
+
+**Finalization scope:** <deliverables and wave covered by this design cycle; exclusions and later-wave treatment>
+
+| Task | Stage | Scope | Status | Evidence or rationale | Next action / owner | Updated |
+|---|---|---|---|---|---|---|
+| Confirm source inventory and scope | Discovery | <source and scope references> | Pending | <known evidence or gap> | <next action and owner> | <YYYY-MM-DD> |
+| Draft shared behavior | Draft | <agent-definition path; link once created> | Pending | <evidence when drafted> | <next action and owner> | <YYYY-MM-DD> |
+| Check package structure | Validation | <current package revision> | Pending | <dated check result and warning dispositions> | <next action and owner> | <YYYY-MM-DD> |
+| Review design substance and traceability | Validation | <scoped files and versions> | Pending | <semantic findings and resolutions> | <next action and owner> | <YYYY-MM-DD> |
+| Confirm design decisions and baseline | Approval | <scoped files and versions> | Pending | <actual confirmation reference, actor, date and scope> | <next action and owner> | <YYYY-MM-DD> |
+| Finalize scoped design package | Finalization | <finalization scope> | Pending | <gate evidence and final verdict> | <next action and owner> | <YYYY-MM-DD> |
+
+<Expand Draft tasks for each use case, applicable experience modality and technical document. Track validation and approval coverage separately; grouped tasks must enumerate their covered files and versions.>
+
 ## Use-Case Prioritization
 
 | Use case | Value (1–5) | Speed (1–5) | Readiness (1–5) | Score | Selection rationale | Evidence status |
@@ -105,7 +120,7 @@ Use this structure for `00-design-index.md`:
 
 ## Readiness Snapshot
 
-<Current verdict, critical blockers, Wave 1 feasibility, and next review action.>
+<Current verdict, checklist progress, critical blockers, Wave 1 feasibility, and next unfinished action. Distinguish a working draft, validated design, and approved/finalized scope.>
 ```
 
 ## Wave governance rules
@@ -125,3 +140,19 @@ Use this structure for `00-design-index.md`:
 - Update the traceability summary after material functional or technical changes.
 - Keep the experience decision summary synchronized with applicable voice and digital files; do not treat a user's confirmation of design recommendations as customer approval of the scope baseline.
 - Record only a concise readiness snapshot; keep detailed findings in `reviews/design-review.md`.
+
+## Active checklist lifecycle
+
+The Design Completion Checklist is the persistent work record for the current design cycle. Create it with the index and maintain it through discovery, drafting, validation, approval and finalization. Its task statuses are separate from document metadata statuses and review criterion statuses.
+
+- Use stages `Discovery`, `Draft`, `Validation`, `Approval`, and `Finalization`. Include all stages from the start, even when work has not reached them. For a partial design assignment, state its bounded finalization scope; do not imply the entire implementation design is complete.
+- Use statuses `Pending`, `In progress`, `Blocked`, `Complete`, `Deferred`, or `Not applicable`. Every row needs a specific task, scope, next action/owner, and last-updated date. For a closed row, the next-action cell may say `None — <accountable owner>`.
+- Create one drafting task for the agent definition, each identified use case (including later-wave skeletons), each applicable experience modality, and each required technical document. Add tasks as scope becomes known. Planned paths remain plain text until files exist; then use relative links. The document register still lists only existing documents.
+- Track structural checks and semantic review separately. Record the checked revision or file versions, date, result, and disposition of warnings/findings. A passing checker alone does not complete semantic review or prove approval. Keep detailed findings in the review file and link them.
+- Keep approval tasks separate from drafting and validation, with the actual confirmation source, actor, date and covered scope/version. Reuse existing valid confirmations; do not introduce an extra approval ceremony. If approval is not part of the requested deliverable, mark it `Not applicable` with that boundary and label the output accordingly. Never label such a draft customer-approved.
+- `Complete` requires evidence of the task's outcome. `Deferred` needs a reason, agreed scope/wave disposition and a follow-up action/owner; `Not applicable` needs a reason. Missing information or unavailable checks remain `Pending` or `Blocked`, not `Complete`. Do not defer an unresolved blocker merely to finalize.
+- Update affected rows with each material file increment, validation run, finding or decision, and before a pause or handoff. On resume, reconcile saved status with current files and evidence before selecting the next unfinished task. Avoid rebuilding the plan from chat memory.
+- Reopen tasks whose evidence was invalidated by a change, including dependent validation, approval and finalization tasks. Preserve earlier results and approvals in change history, then record the new scope/version; do not silently carry approval to changed behavior.
+- For an older modular package, add the checklist during an authorized update and derive statuses only from available evidence. Review-only work may report its absence without rewriting the input. Legacy v1 review remains supported.
+
+Keep rows concise and link canonical design content instead of embedding functional SOPs, journey walkthroughs or technical specifications in the index. Before finalization, compare the checklist with the document register, wave scope and applicable category requirements so omitted work cannot disappear behind completed rows. Apply the review guide's finalization gate and update the readiness snapshot in the same increment.

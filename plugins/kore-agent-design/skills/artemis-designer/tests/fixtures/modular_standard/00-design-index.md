@@ -13,7 +13,7 @@
 | Wave | All |
 | Canonical owner for | Package governance, wave scope, and change history |
 | Source evidence | Approved equipment-request discovery |
-| Last updated | 2026-09-21 |
+| Last updated | 2026-11-13 |
 
 ## Engagement and Design Context
 
@@ -47,6 +47,26 @@ Wave 1 includes the platform foundation and equipment-request use case.
 | DOC-006 | [Use-Case APIs](technical/use-case-apis.md) | Use-Case APIs | 0.1 | In Review | Wave 1 | API contracts |
 | DOC-007 | [Data and Security](technical/data-security.md) | Data and Security | 0.1 | In Review | Wave 1 | Data and authorization |
 | DOC-008 | [Operations and Release](technical/operations-testing-release.md) | Operations, Testing, and Release | 0.1 | In Review | Wave 1 | Test and release design |
+
+## Design Completion Checklist
+
+**Finalization scope:** Wave 1 equipment-request functional, voice and technical design, including shared behavior.
+
+| Task | Stage | Scope | Status | Evidence or rationale | Next action / owner | Updated |
+|---|---|---|---|---|---|---|
+| Confirm source inventory and scope | Discovery | Scope Baseline | Complete | Synthetic discovery baseline recorded above | None — Design owner | 2026-11-13 |
+| Draft shared behavior | Draft | [shared behavior](01-agent-definition.md) | Complete | Fixture document version 0.1 drafted | None — Design owner | 2026-11-13 |
+| Draft equipment request | Draft | [equipment request](use-cases/UC-001-equipment-request.md) | Complete | Fixture document version 0.1 drafted | None — Design owner | 2026-11-13 |
+| Draft voice experience | Draft | [voice experience](experience/voice.md) | Complete | Fixture document version 0.1 drafted | None — Design owner | 2026-11-13 |
+| Draft architecture | Draft | [architecture](technical/architecture.md) | Complete | Fixture document version 0.1 drafted | None — Design owner | 2026-11-13 |
+| Draft connectivity | Draft | [connectivity](technical/connectivity-integrations.md) | Complete | Fixture document version 0.1 drafted | None — Design owner | 2026-11-13 |
+| Draft API contracts | Draft | [API contracts](technical/use-case-apis.md) | Complete | Fixture document version 0.1 drafted | None — Design owner | 2026-11-13 |
+| Draft data and security | Draft | [data and security](technical/data-security.md) | Complete | Fixture document version 0.1 drafted | None — Design owner | 2026-11-13 |
+| Draft operations and release | Draft | [operations and release](technical/operations-testing-release.md) | Complete | Fixture document version 0.1 drafted | None — Design owner | 2026-11-13 |
+| Check structure | Validation | All registered files v0.1 | Pending | Not yet checked | Run package checker — Designer | 2026-11-13 |
+| Review semantics | Validation | All registered files v0.1 | Pending | Not yet reviewed | Review substance and traceability — Design reviewer | 2026-11-13 |
+| Confirm design | Approval | All registered files v0.1 | Pending | Scope approval does not approve this design | Confirm design decisions — Design owner | 2026-11-13 |
+| Finalize design | Finalization | Wave 1 design package v0.1 | Pending | Awaiting validation and design confirmation | Reconcile finalization gate — Designer | 2026-11-13 |
 
 ## Foundation Register
 

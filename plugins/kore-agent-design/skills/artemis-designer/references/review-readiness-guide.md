@@ -14,7 +14,8 @@ Check that:
 - evidence authority, baseline state, owners, versions, statuses, and wave assignments are explicit;
 - each fact has one canonical owner and links resolve to that source;
 - approved scope changes have `CHG-###` records and affected documents were reconciled;
-- identifiers are stable, unique, defined, referenced, and not silently reused; and
+- identifiers are stable, unique, defined, referenced, and not silently reused;
+- the active checklist covers the scoped deliverables, separates drafting from validation and approval, and agrees with current files, findings and confirmation evidence; and
 - derived exports are not competing editable sources.
 
 ## Functional and experience review
@@ -60,6 +61,19 @@ Do not estimate effort. When evidence cannot support the target, identify the ex
 - `READY FOR TECHNICAL DESIGN` — functional and experience scope are designable, but material technical decisions remain.
 - `READY WITH TRACKED GAPS` — a bounded first setup slice can start safely while named nonblocking gaps remain.
 - `READY FOR PROJECT SETUP` — Wave 1 foundation and the first implementation slice are supported with no critical blocker.
+
+## Design finalization gate
+
+Finalization applies to the explicitly recorded design scope; it does not itself authorize a build or prove implementation readiness. A functional-design-only assignment may finish while technical design remains a later task. State that boundary in the index and final response.
+
+Before marking the checklist's Finalization task `Complete`:
+
+1. Reconcile the checklist against the source scope, document register, every in-scope use case, applicable experience modalities and required technical categories. Preserve the separate canonical files and resolve missing coverage.
+2. Complete structural validation and semantic review for the current versions. Resolve material findings; record justified dispositions for nonblocking warnings. The advisory checker's exit code is not a finalization verdict.
+3. Resolve required confirmation and approval tasks using actual evidence. Explicit exclusions or agreed deferrals must have rationale, scope/wave treatment and a follow-up owner where needed. Required unresolved work or blockers prevent finalization; never substitute deferral for required approval.
+4. Ensure all other tasks are `Complete`, `Deferred`, or `Not applicable` with the required evidence/rationale. Update document statuses, index metadata, checklist evidence, review findings and readiness snapshot consistently. The finalization row must cite the reconciled scope/version and verdict.
+
+If the gate is not met, deliver the useful draft or review with its unfinished checklist and next actions. `READY WITH TRACKED GAPS` is a bounded handoff verdict, not proof that the entire design is finalized. A missing checklist in an older review input is a tracking gap, not automatic evidence that its design substance is invalid; do not rewrite that input without an update request.
 
 ## Finding format
 

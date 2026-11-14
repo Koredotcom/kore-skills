@@ -233,6 +233,79 @@ class CheckDesignStructureTests(unittest.TestCase):
         self.assertEqual(result["technical"]["status"], "PASS")
         self.assertEqual(result["traceability"]["status"], "PASS")
 
+    def test_missing_checklist_is_advisory_for_existing_modular_packages(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            index = package / "00-design-index.md"
+            before, rest = index.read_text().split("## Design Completion Checklist", 1)
+            index.write_text(before + "## Foundation Register" + rest.split("## Foundation Register", 1)[1])
+            result = self.run_checker("--package", str(package))
+        self.assertTrue(result["advisory"])
+        self.assertIn("Index has no Design Completion Checklist tasks", result["package"]["warnings"])
+
+    def test_finalization_cannot_hide_pending_validation_and_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            index = package / "00-design-index.md"
+            index.write_text(index.read_text().replace(
+                "| Finalize design | Finalization | Wave 1 design package v0.1 | Pending |",
+                "| Finalize design | Finalization | Wave 1 design package v0.1 | Complete |",
+            ))
+            result = self.run_checker("--package", str(package))
+        warnings = "\n".join(result["package"]["warnings"])
+        self.assertIn("Design marked finalized with unfinished checklist tasks", warnings)
+        for task in ("Check structure", "Review semantics", "Confirm design"):
+            self.assertIn(task, warnings)
+
+    def test_completion_and_dispositions_require_evidence_and_valid_tracking(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            index = package / "00-design-index.md"
+            source = index.read_text()
+            source = source.replace("**Finalization scope:**", "**Unspecified scope:**")
+            source = source.replace("| Approval |", "| Confirmation |")
+            source = source.replace("| Complete | Fixture document version 0.1 drafted |", "| Complete | |")
+            source = source.replace("| Pending | Not yet checked |", "| Done | Not yet checked |")
+            source = source.replace("| Pending | Not yet reviewed |", "| Deferred | |")
+            source = source.replace("| Pending | Scope approval does not approve this design |", "| Not applicable | |")
+            source = source.replace("| 2026-11-13 |", "| yesterday |")
+            index.write_text(source)
+            result = self.run_checker("--package", str(package))
+        warnings = "\n".join(result["package"]["warnings"])
+        for expected in ("no finalization scope", "missing stages: Approval", "invalid stage: Confirmation",
+                         "invalid status: Done", "invalid updated date",
+                         "'Draft shared behavior' has no completion evidence",
+                         "'Review semantics' has no completion evidence",
+                         "'Confirm design' has no completion evidence"):
+            self.assertIn(expected, warnings)
+
+    def test_finalized_package_and_change_reopening(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            index = package / "00-design-index.md"
+            source = index.read_text().replace("| Pending |", "| Complete |")
+            source = source.replace("Not yet checked", "Synthetic structural review v0.1: PASS")
+            source = source.replace("Not yet reviewed", "Synthetic semantic review v0.1: no findings")
+            source = source.replace("Scope approval does not approve this design", "Synthetic design owner confirmation, v0.1, 2026-11-13")
+            source = source.replace("Awaiting validation and design confirmation", "Synthetic scoped finalization gate v0.1 met")
+            index.write_text(source)
+            self.assertEqual(self.run_checker("--package", str(package))["package"]["status"], "PASS")
+
+            source = source.replace("| Review semantics | Validation | All registered files v0.1 | Complete |",
+                                    "| Review semantics | Validation | Changed voice design | Blocked |")
+            index.write_text(source)
+            stale = self.run_checker("--package", str(package))
+            self.assertIn("Design marked finalized with unfinished checklist tasks: Review semantics", stale["package"]["warnings"])
+
+            source = source.replace("| Finalize design | Finalization | Wave 1 design package v0.1 | Complete |",
+                                    "| Finalize design | Finalization | Revised design scope | Pending |")
+            index.write_text(source)
+            self.assertEqual(self.run_checker("--package", str(package))["package"]["status"], "PASS")
+
     def test_freeform_legacy_file_is_unrecognized_without_rejection(self) -> None:
         result = self.run_checker(
             "--functional", str(FIXTURES / "freeform_design.md")

@@ -112,3 +112,52 @@ Expected behavior:
 - Asks focused follow-ups for target callers, locales, consequential policies, and constraints still missing after source review; does not enforce a five-question total limit or run a low-value questionnaire.
 - Recommends voice character, accent, pace by content type, pronunciation handling, turn-taking, and recovery with evidence states and listening-test needs.
 - Accepts “approve these recommendations except make the rate slower for confirmation numbers,” updates the linked experience, architecture, tests, and index, and does not treat this as customer approval of an unsupported scope baseline.
+
+## Scenario 9: implicit project-planning discovery
+
+Run each prompt in a fresh session where the updated skill is available, without explicitly mentioning the skill:
+
+> Help me plan a Kore.ai Artemis project and create its functional design.
+
+> Create the technical design for this Kore.ai Agent Platform project from these requirements.
+
+> Design the voice and web experiences and use cases for our Kore.ai agent.
+
+Expected behavior:
+
+- Selects Artemis Designer and loads its instructions before authoring the design.
+- Requests missing relevant evidence and destination, then creates the governed multi-file package and active checklist.
+- Does not create or modify a platform project from design-only authorization.
+
+Negative controls: “Plan a kitchen renovation” should not select Designer; “Implement this approved Kore.ai design” belongs to Developer; “Test this deployed agent's conversation performance” belongs to Reviewer. Record actual selection behavior; matching metadata alone does not establish success.
+
+## Scenario 10: persistent checklist through resume and finalization
+
+Use the synthetic modular fixture as an existing design in a temporary working folder. Prompt:
+
+> Continue this design, validate the functional, voice and technical documents, and prepare it for finalization. Use the existing index. I have not approved the design yet.
+
+Expected behavior:
+
+- Reads the saved checklist and current files, preserves completed drafting evidence and separate canonical documents, and resumes pending validation instead of restarting discovery.
+- Records actual structural and semantic review evidence independently. Leaves unresolved confirmation work open and does not mark finalization complete merely because checks pass.
+- Updates task dates, evidence, next actions/owners and the readiness snapshot before handing back.
+
+Follow up with confirmation of the reviewed version, then a change to voice interruption behavior:
+
+- Applies confirmation only to its actual scope/version, reconciles the finalization gate, and records the resulting state without requiring repeated approval of unchanged decisions.
+- On the subsequent behavior change, reopens affected drafting, validation, approval and finalization work; preserves prior evidence in change history and identifies dependent technical/test updates.
+- Never copies complete SOPs or technical specifications into the checklist.
+
+## Scenario 11: bounded design and older inputs
+
+Prompt:
+
+> Update only the functional design in this older modular package. Technical design is a later deliverable; do not mark it implementation-ready.
+
+Expected behavior:
+
+- Adds an evidence-based checklist if absent and states functional-only finalization scope.
+- Tracks every identified use case separately, preserves later-wave skeletons, and records excluded/deferred work with rationale and ownership.
+- Does not invent previous validation or approval evidence or silently mark the entire design complete.
+- For a separate review-only legacy input, reports tracking gaps without rewriting or forcing migration.
