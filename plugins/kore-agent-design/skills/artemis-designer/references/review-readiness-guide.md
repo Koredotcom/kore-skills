@@ -18,6 +18,8 @@ Check that:
 - the active checklist covers the scoped deliverables, separates drafting from validation and approval, and agrees with current files, findings and confirmation evidence; and
 - derived exports are not competing editable sources.
 
+Also check the one-page executive brief is first, readable without IDs and consistent with canonical scope, KPIs, exclusions, risks and readiness; the index begins with a plain status legend; and kickoff decisions/access actions name the customer owner, needed-by date and blocked work. Missing facts must be explicit owned gaps, not invented dates or approvals. Verify the Sign-off Matrix covers current files/versions: business reviews use cases and experience, technical reviews technical files, and each reviewer reads only their assigned sign-off files. The coordinator reconciles cross-file facts.
+
 ## Functional and experience review
 
 Check that:
@@ -29,6 +31,13 @@ Check that:
 - applicable modalities have category-specific behavior and failure handling; and
 - critical journeys and EXP decisions are understandable to a customer, linked to functional sources and acceptance evidence, and clearly marked proposed or confirmed; and
 - voice covers listener-appropriate voice/accent and rate rationale, pronunciation, turn-taking, silence, interruption, recognition, confirmation, latency, transfer, sensitive values, accessibility, and rendered-audio testing.
+
+Apply these business-readability checks as semantic findings, not merely heading checks:
+
+- Each use case passes the standalone-contact and completed-result tests in the use-case guide (or the sole-purpose trigger and completed-outcome equivalent for process agents). Flag authentication, identity checks and capture steps promoted to use cases without an independent user goal. Flag generic labels such as “Handle incoming users”, “Manage customer queries” or “Process requests”, and labels that combine goals; propose a specific verb/object name or split.
+- Every business outcome has a comparable baseline, target and measurement source. An explicit TBD is a tracked gap, not a measured success; assess whether it blocks the next decision.
+- Every Wave 1 use case has a happy-path and failure-path Speaker/Message sample through a clear result. For process-only agents, verify equivalent event/result exchanges without an invented conversational interface. Samples must agree with the SOP, business rules, modality decisions and acceptance criteria; examples are not runtime evidence. Diagrams are optional for many branches.
+- Trigger, Actors and Preconditions are explicit, and functional SOPs describe business actions rather than API calls, endpoints or payloads. Keep contract references in Integration and API Needs.
 
 ## Technical review
 
@@ -68,10 +77,10 @@ Finalization applies to the explicitly recorded design scope; it does not itself
 
 Before marking the checklist's Finalization task `Complete`:
 
-1. Reconcile the checklist against the source scope, document register, every in-scope use case, applicable experience modalities and required technical categories. Preserve the separate canonical files and resolve missing coverage.
+1. Reconcile the checklist against the source scope, document register, executive brief, business outcome measures, kickoff actions, every in-scope use case (including Wave 1 samples), applicable experience modalities and required technical categories. Preserve the separate canonical files and resolve missing coverage.
 2. Complete structural validation and semantic review for the current versions. Resolve material findings; record justified dispositions for nonblocking warnings. The advisory checker's exit code is not a finalization verdict.
-3. Resolve required confirmation and approval tasks using actual evidence. Explicit exclusions or agreed deferrals must have rationale, scope/wave treatment and a follow-up owner where needed. Required unresolved work or blockers prevent finalization; never substitute deferral for required approval.
-4. Ensure all other tasks are `Complete`, `Deferred`, or `Not applicable` with the required evidence/rationale. Update document statuses, index metadata, checklist evidence, review findings and readiness snapshot consistently. The finalization row must cite the reconciled scope/version and verdict.
+3. Resolve required confirmation and approval tasks against the file-scoped Sign-off Matrix using actual evidence for the current versions. Explicit exclusions or agreed deferrals must have rationale, scope/wave treatment and a follow-up owner where needed. Required unresolved work or blockers prevent finalization; never substitute deferral for required approval.
+4. Ensure all other tasks are `Complete`, `Deferred`, or `Not applicable` with the required evidence/rationale. Update document statuses, index metadata, checklist evidence, review findings, kickoff actions, sign-offs and readiness snapshot consistently; refresh the brief last against those canonical facts. The finalization row must cite the reconciled scope/version and verdict.
 
 If the gate is not met, deliver the useful draft or review with its unfinished checklist and next actions. `READY WITH TRACKED GAPS` is a bounded handoff verdict, not proof that the entire design is finalized. A missing checklist in an older review input is a tracking gap, not automatic evidence that its design substance is invalid; do not rewrite that input without an update request.
 

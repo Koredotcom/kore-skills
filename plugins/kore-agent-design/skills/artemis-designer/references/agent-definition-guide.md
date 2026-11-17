@@ -16,6 +16,9 @@ Read this reference when creating or updating `01-agent-definition.md`. This doc
 
 <Problem, agent charter, measurable outcomes, and success definition.>
 
+| Business outcome | KPI and measurement window | Baseline | Target | Measurement source | Evidence status | Owner / next action |
+|---|---|---|---|---|---|---|
+
 ## Operating Model and Boundaries
 
 **Type:** Conversational | Process | Hybrid
@@ -57,6 +60,8 @@ Read this reference when creating or updating `01-agent-definition.md`. This doc
 
 ## Category rules
 
+- Give every business outcome a baseline, target and measurement source, with units, time window and metric definition sufficient for comparison. This table is the canonical source for the executive brief's KPIs. Link relevant outcomes from use cases rather than inventing separate success measures.
+- Do not invent numbers or sources. Record missing values as `TBD` with an owner and resolution action; label recommended targets `Proposed`. Track customer measurement decisions in the index kickoff table and assess their readiness impact.
 - Put behavior here only when it applies across use cases. Link from a use-case file instead of copying it.
 - Keep channel-neutral behavior here. Put modality-specific behavior in the applicable experience document.
 - Define how the agent adapts tone to context without generic empathy preambles, false reassurance, or promises beyond its authority. Preserve the user's underlying goal alongside the literal request.

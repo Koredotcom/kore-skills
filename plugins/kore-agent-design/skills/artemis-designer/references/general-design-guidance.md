@@ -12,7 +12,7 @@ Read this reference for every modular package creation or update. It defines rul
 
 ## Required metadata
 
-Begin every package document with one category marker and this visible metadata section:
+Begin every canonical package document with one category marker and this visible metadata section. The one-page derived `00-business-brief.md` is the sole exception: no IDs, marker or metadata block; its governance fields live only in the index register (see [executive brief guide](executive-brief-guide.md)).
 
 ```markdown
 <!-- kore-agent-design:<category>:v2 -->
@@ -45,7 +45,7 @@ Use three digits and never recycle an identifier:
 |---|---|---|
 | `DOC-###` | Package document | Index and document metadata |
 | `FND-###` | Foundation item | Index |
-| `UC-###` | User goal or process use case | Use-case document |
+| `UC-###` | Distinct user goal, or triggered outcome for process agents | Use-case document |
 | `FR-###` | Functional requirement | Use-case or agent-definition document |
 | `BR-###` | Business rule | Use-case or agent-definition document |
 | `EXP-###` | Experience requirement | Experience document |

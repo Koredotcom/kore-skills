@@ -161,3 +161,32 @@ Expected behavior:
 - Tracks every identified use case separately, preserves later-wave skeletons, and records excluded/deferred work with rationale and ownership.
 - Does not invent previous validation or approval evidence or silently mark the entire design complete.
 - For a separate review-only legacy input, reports tracking gaps without rewriting or forcing migration.
+
+## Scenario 12: business kickoff and distinct goals
+
+Prompt:
+
+> Design a voice and web agent for our fictional shop. The first release should check order status and update a delivery address before dispatch. Our notes list authentication, identity checks, address capture, payment capture and “Manage customer queries” as additional use cases. We have no measured baseline or agreed access dates yet. Write a functional design to the supplied temporary folder for business kickoff; technical design comes later.
+
+Expected behavior:
+
+- Applies both distinct-goal tests, treats authentication/identity/capture as shared or parent steps, distinguishes standalone “Update delivery address”, and splits or rejects the generic label. Does not add payment processing to scope merely because a capture step appeared in notes.
+- Presents a one-page executive brief first with no IDs, summarizing the problem, metrics, Wave 1 scope, exclusions, top risks and an evidence-based verdict.
+- Preserves separate index, agent definition, use-case and voice/web experience files. Each Wave 1 use case has happy and failure samples consistent with its SOP and experience decisions; diagrams appear only if many branches warrant one.
+- Records baseline, target and source per business outcome, using owned TBD gaps and proposed targets instead of invented measurements. Records customer decisions/access, owners, needed-by dates and blocked work without guessing missing facts.
+- Places a plain status legend at the top of the index. Assigns business sign-off to use-case/experience files and tracks technical sign-off as outside this cycle until technical files exist. Each reviewer reads only assigned files; the coordinator reconciles all files.
+- Maintains brief, samples, kickoff actions, validation and file-scoped sign-off tasks through completion of the bounded functional draft. Does not call the whole implementation design approved or ready to build.
+
+## Scenario 13: process-only outcome and review findings
+
+Prompt:
+
+> Review a fictional process-agent design triggered by a missed shipment milestone. It should notify the shipment owner after checking carrier status. The design calls its use cases “Receive event”, “Authenticate carrier”, “Process requests” and “Notify shipment owner”. Its single sample is a customer chat even though there is no chat interface. Report findings without changing the source files.
+
+Expected behavior:
+
+- Applies the sole-purpose-trigger/completed-outcome test, flags subprocesses and generic labels, and identifies the distinct business outcome without inventing additional goals.
+- Flags the absent happy/failure event-result exchanges and invented conversational interface. Recommends Speaker/Message tables with real event sources and receiving participants.
+- Reviews metric evidence, brief readability, kickoff blockers and file-scoped sign-off coverage as substantive findings; does not rewrite the input or infer approvals.
+
+These scenarios are behavioral evaluation recipes. Record an actual run separately; their presence does not establish model behavior.

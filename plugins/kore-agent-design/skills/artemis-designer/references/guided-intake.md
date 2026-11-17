@@ -34,7 +34,7 @@ Discover enough to state:
 - the business problem and why an agent is appropriate;
 - primary users, decision owners, and stakeholders;
 - initiating events or user requests;
-- desired outcomes and measurable success;
+- desired outcomes, each KPI's baseline, target and measurement source (including units and time window);
 - agent boundaries and explicit exclusions; and
 - likely operating model: conversational, process, or hybrid.
 
@@ -42,7 +42,9 @@ Draft the index context and agent definition as soon as this is stable enough. E
 
 ## Round 2: scope, waves, and priority
 
-Inventory distinct business outcomes and separate them from welcome behavior, fallback, reminders, lifecycle hooks, and generic escalation. For each candidate use case, capture:
+Apply the [use-case definition and naming rules](use-case-guide.md#what-counts-as-a-use-case) before assigning IDs. For every candidate ask: “Would someone call, chat or write in for this alone?” and “Does it end with a result the person sees as done?” For process agents, ask whether the trigger exists solely for this outcome and whether its business owner sees an observable completed result. Treat authentication, identity checks, address or payment capture as steps or shared behavior unless people independently contact the agent for that goal (for example, “Update my address”). Use a verb plus a specific object in the customer's words; reject generic labels such as “Manage customer queries” and split labels containing multiple goals.
+
+Separate welcome behavior, fallback, reminders, lifecycle hooks and generic escalation from distinct goals. For each candidate use case, capture:
 
 - trigger, actors, outcome, volume, and business value;
 - main steps, variations, failures, systems, and data;
@@ -53,6 +55,8 @@ Inventory distinct business outcomes and separate them from welcome behavior, fa
 
 Preserve a customer-approved Wave 1 selection. When scope is only proposed, label it accordingly. Wave 1 contains foundation plus at least one use case and defaults to a 30-working-day planning target unless another target is confirmed.
 
+Build the index's Kickoff decisions and customer actions table now: list each outstanding decision or access item, its customer owner, needed-by date and what it blocks. Unknown owners/dates remain TBD with a resolution action. Draft the one-page executive brief as the business entry point; keep the detailed registry and IDs in the index.
+
 ## Round 3: use-case SOPs
 
 Work through one use case or a small related group at a time. Ask for business-level steps, inputs and validation, rules, branches, terminal outcomes, correction, handoff, knowledge, systems, and acceptance scenarios.
@@ -60,6 +64,8 @@ Work through one use case or a small related group at a time. Ask for business-l
 For work that waits, runs asynchronously, or involves a person, ask about correlation, persisted state, task assignment and authorization, evidence shown, every decision outcome, deadlines, reminders, resumption, duplicate events, cancellation, recovery, audit, and status visibility.
 
 Keep endpoints, payloads, node types, prompt text, and code out of functional SOPs.
+
+For each Wave 1 use case, draft a happy-path and failure-path Speaker/Message conversation through an observable outcome. Use illustrative process exchanges for non-conversational agents. Link to the separately owned experience rules; add a flow diagram only when many branches warrant it.
 
 ## Round 4: experience design
 
@@ -95,5 +101,7 @@ Cross-check the complete package:
 - shared facts have one canonical owner;
 - open questions and dependencies have owners and next actions; and
 - Wave 1 foundation and selected use case have evidence supporting the target.
+
+Check that the executive brief has no IDs and matches the canonical scope, KPIs, risks and verdict; the index explains statuses; every business outcome has a baseline, target and measurement source or an owned gap; and kickoff actions and the file-scoped sign-off matrix are current. Route use-case and experience files to business reviewers and technical files to technical reviewers. Each reviewer reads only the files they sign; the coordinator reconciles the whole package.
 
 Run the structural checker, then apply the semantic review and readiness guide. Ask only the questions that can materially improve the next verdict.

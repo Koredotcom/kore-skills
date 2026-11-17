@@ -26,8 +26,106 @@ class CheckDesignStructureTests(unittest.TestCase):
     def test_modular_standard_package_passes(self) -> None:
         result = self.run_checker("--package", str(FIXTURES / "modular_standard"))
         self.assertEqual(result["package"]["status"], "PASS")
-        self.assertEqual(result["package"]["inventory"]["documentCount"], 9)
+        self.assertEqual(result["package"]["inventory"]["documentCount"], 10)
         self.assertEqual(result["package"]["inventory"]["undefinedReferences"], [])
+
+    def test_brief_uses_index_governance_without_embedded_ids(self) -> None:
+        result = self.run_checker("--package", str(FIXTURES / "modular_standard"))["package"]
+        brief = result["documents"][0]
+        self.assertEqual(brief["path"], "00-business-brief.md")
+        self.assertEqual(brief["metadataSource"], "00-design-index.md#document-register")
+        self.assertEqual(brief["metadata"]["document id"], "DOC-009")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            index = package / "00-design-index.md"
+            index.write_text(index.read_text().replace(
+                "](00-business-brief.md)", "](./00-business-brief.md)"
+            ), encoding="utf-8")
+            self.assertEqual(self.run_checker("--package", str(package))["package"]["status"], "PASS")
+            path = package / "00-business-brief.md"
+            path.write_text(path.read_text() + "\nUC-001 and API-001\n", encoding="utf-8")
+            warnings = "\n".join(self.run_checker("--package", str(package))["package"]["warnings"])
+            self.assertIn("Executive brief must contain no IDs", warnings)
+
+    def test_older_modular_business_gaps_remain_advisory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            (package / "00-business-brief.md").unlink()
+            index = package / "00-design-index.md"
+            text = index.read_text()
+            for heading in ("Status Legend", "Kickoff decisions and customer actions", "Sign-off Matrix"):
+                start = text.index("## " + heading)
+                end = text.index("\n## ", start + 3)
+                text = text[:start] + text[end + 1:]
+            index.write_text(text, encoding="utf-8")
+            result = self.run_checker("--package", str(package))
+        self.assertTrue(result["advisory"])
+        warnings = "\n".join(result["package"]["warnings"])
+        for message in ("Missing first-file executive brief", "Status Legend", "Kickoff decisions and customer actions table", "Sign-off Matrix table"):
+            self.assertIn(message, warnings)
+
+    def test_wave_one_samples_and_required_fields_report_missing_content(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            path = package / "use-cases/UC-001-equipment-request.md"
+            text = path.read_text()
+            text = text.replace("**Trigger:** An employee asks to request an item from the approved catalog.", "**Trigger:**")
+            start = text.index("### Failure path")
+            end = text.index("## Long-Running Behavior", start)
+            text = text[:start] + text[end:]
+            path.write_text(text, encoding="utf-8")
+            warnings = "\n".join(self.run_checker("--package", str(package))["package"]["warnings"])
+        self.assertIn("missing required Trigger field", warnings)
+        self.assertIn("needs a Failure path Speaker/Message sample", warnings)
+        self.assertNotIn("needs a Happy path", warnings)
+
+    def test_process_samples_accept_event_participants(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            path = package / "use-cases/UC-001-equipment-request.md"
+            text = path.read_text()
+            start = text.index("## Sample Conversations")
+            end = text.index("## Long-Running Behavior", start)
+            text = text[:start] + '''## Sample Conversations
+
+Illustrative process exchanges, not a conversational interface.
+
+### Happy path
+
+| Speaker | Message |
+|---|---|
+| Request event | An employee submitted a valid equipment request. |
+| Agent | Request recorded; awaiting manager decision. |
+| Manager event | Request approved. |
+| Agent | Approval recorded and employee notified. |
+
+### Failure path
+
+| Speaker | Message |
+|---|---|
+| Request event | An employee submitted a request with no item. |
+| Agent | Request rejected as incomplete; source notified to supply an item. |
+
+''' + text[end:]
+            path.write_text(text, encoding="utf-8")
+            result = self.run_checker("--package", str(package))["package"]
+        self.assertEqual(result["status"], "PASS", result["warnings"])
+
+    def test_business_tables_report_missing_values_without_inventing_them(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            package = Path(temp_dir) / "design"
+            shutil.copytree(FIXTURES / "modular_standard", package)
+            path = package / "01-agent-definition.md"
+            path.write_text(path.read_text().replace("60% in the fictional pre-launch month", ""), encoding="utf-8")
+            index = package / "00-design-index.md"
+            index.write_text(index.read_text().replace("TBD — agree before setup", ""), encoding="utf-8")
+            warnings = "\n".join(self.run_checker("--package", str(package))["package"]["warnings"])
+        self.assertIn("outcome row 1 missing: baseline", warnings)
+        self.assertIn("row 1 has empty fields: needed-by date", warnings)
 
     def test_package_under_hidden_ancestors_or_with_hidden_name_passes(self) -> None:
         baseline = self.run_checker("--package", str(FIXTURES / "modular_standard"))["package"]

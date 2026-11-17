@@ -17,7 +17,17 @@
 
 ## Outcome and Scope
 
-The employee receives a recorded approval or rejection outcome. FND-001 is required.
+**Business objective:** Give employees a recorded equipment-request outcome, supporting the [business outcome measures](../01-agent-definition.md#purpose-and-business-outcomes).
+
+**Trigger:** An employee asks to request an item from the approved catalog.
+
+**Actors:** Employee, agent, authorized manager, request system and Workplace Operations.
+
+**Preconditions:** The employee is authenticated, the catalog is available and a manager can be assigned. FND-001 is required.
+
+**Completion outcome:** The employee receives a recorded approval or rejection outcome.
+
+**Out of scope:** Purchasing and physical delivery of approved equipment.
 
 ## Inputs and Evidence
 
@@ -35,7 +45,12 @@ The shared authorization rule is [BR-001](../01-agent-definition.md).
 
 ## Functional SOP
 
-1. Confirm the employee, collect the item and justification, invoke [API-001](../technical/use-case-apis.md), wait for the authorized decision, and report the outcome.
+1. Confirm the employee's identity using the shared authentication behavior.
+2. Collect the requested catalog item and justification.
+3. Summarize the request and ask the employee to confirm submission.
+4. Record the confirmed request and route it to the authorized manager.
+5. Preserve the pending request while awaiting the manager's decision.
+6. Record and report the approval or rejection to the employee.
 
 ## Branches, Exceptions, and Recovery
 
@@ -44,6 +59,36 @@ Approval and rejection are terminal; unavailable systems follow [INT-001](../tec
 ## Human Participation
 
 An authorized manager approves or rejects before expiration.
+
+## Sample Conversations
+
+Illustrative voice conversations, not runtime evidence. The later manager decision resumes the pending request; channel behavior is owned by the [voice experience](../experience/voice.md).
+
+### Happy path
+
+| Speaker | Message |
+|---|---|
+| User | I need to request an ergonomic keyboard. |
+| Agent | What is the reason for your request? |
+| User | My current keyboard is uncomfortable during long typing sessions. |
+| Agent | Submit a request for an ergonomic keyboard for more comfortable typing? |
+| User | Yes. |
+| Agent | Your request is recorded and waiting for your manager's decision. |
+| Manager | I approve the keyboard request. |
+| Agent | Your keyboard request has been approved. |
+
+### Failure path
+
+| Speaker | Message |
+|---|---|
+| User | I want to request a second monitor. |
+| Agent | What is the reason for your request? |
+| User | I need more screen space when comparing reports. |
+| Agent | Submit a request for a second monitor to compare reports? |
+| User | Yes. |
+| Agent | Your request is recorded and waiting for your manager's decision. |
+| Manager | I reject the request because this item is not approved for this role. |
+| Agent | Your manager declined the monitor request because it is not approved for your role. No equipment will be ordered from this request. |
 
 ## Long-Running Behavior
 
