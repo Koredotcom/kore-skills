@@ -19,6 +19,12 @@
 
 Help authenticated employees request approved equipment and receive a recorded outcome.
 
+All figures below are synthetic fixture assumptions, not observed customer results.
+
+| Business outcome | KPI and measurement window | Baseline | Target | Measurement source | Evidence status | Owner / next action |
+|---|---|---|---|---|---|---|
+| Employees receive timely equipment decisions | Share of submitted requests with a recorded decision within two working days, measured monthly | 60% in the fictional pre-launch month | Proposed 90% in the first full month after launch | Request-system submission and decision timestamps | Assumption | Workplace Operations / confirm baseline and target before acceptance planning |
+
 ## Operating Model and Boundaries
 
 Hybrid: conversation starts a durable approval process.

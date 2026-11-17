@@ -51,6 +51,7 @@ Never present an inference as an existing capability or approved decision. Missi
 
 For every package creation or update, read [references/general-design-guidance.md](references/general-design-guidance.md) and [references/design-index-guide.md](references/design-index-guide.md) completely.
 
+- For the first business-facing file, read [references/executive-brief-guide.md](references/executive-brief-guide.md).
 - For thin input or guided discovery, also read [references/guided-intake.md](references/guided-intake.md).
 - For the shared agent charter and behavior, read [references/agent-definition-guide.md](references/agent-definition-guide.md).
 - For each use case, read [references/use-case-guide.md](references/use-case-guide.md).
@@ -68,6 +69,7 @@ Create only files supported by the current evidence, but establish the index fir
 
 ```text
 <agent-slug>-design/
+├── 00-business-brief.md
 ├── 00-design-index.md
 ├── 01-agent-definition.md
 ├── use-cases/
@@ -89,16 +91,18 @@ Omit category files that are not applicable and record that decision in the inde
 Work incrementally in this order:
 
 1. Inventory the supplied evidence and distinguish confirmed scope from proposals.
-2. Write the index with its active Design Completion Checklist, agent definition, and first Wave 1 use-case file as the minimum governed package. Register only files that exist, and include only identifiers already defined or created in the same increment.
+2. Write the index with its status legend, kickoff actions, file-scoped Sign-off Matrix and active Design Completion Checklist, plus the agent definition, first Wave 1 use-case file and one-page executive brief as the minimum governed package. Present the brief first, with no IDs; keep its governance in the index. Register only files that exist, and include only identifiers already defined or created in the same increment.
 3. Run the checker immediately and correct foundational metadata, link, identifier, prioritization, and wave warnings before expanding the package.
 4. Create additional use-case, experience, and technical documents in small independent increments. Read each category guide immediately before that category and update the index and checklist with the same increment.
 5. Run the checker after each material increment, record validation evidence in the checklist, then reconcile cross-document facts and perform the final semantic review.
 
 Do not delay all writes while designing a warning-free final package in memory. A complete, evidence-labelled working draft is the first checkpoint; refinement follows validation. When a later-wave use case receives a `UC-###`, create at least its governed skeletal use-case file so the identifier has one canonical definition.
 
+Before allocating use-case IDs, apply the standalone-goal and naming tests in the use-case guide. Require a baseline, target and measurement source for each business outcome, with owned gaps for unknowns. Each Wave 1 use case includes happy-path and failure-path sample conversations; keep shared channel behavior in separate experience files. Business signs use cases and experience; technical signs technical files. Each reviewer reads only the files they sign, while the coordinator reconciles the package.
+
 ## Maintain the active completion checklist
 
-Use the [index guide's checklist contract](references/design-index-guide.md#active-checklist-lifecycle) from the first increment through finalization. Track discovery, each use case, applicable experience and technical documents, structural and semantic validation, approval, and finalization. Keep drafting, validation, and approval as separate tasks; a written file is not evidence of the latter two.
+Use the [index guide's checklist contract](references/design-index-guide.md#active-checklist-lifecycle) from the first increment through finalization. Track discovery, the executive brief, business metrics, customer kickoff actions, each use case and its Wave 1 samples, applicable experience and technical documents, structural and semantic validation, file-scoped approval, and finalization. Keep drafting, validation, and approval as separate tasks; a written file is not evidence of the latter two.
 
 Update task status, evidence, next action/owner, and date after each material increment, check, or decision and before handing work back. On resume, read the saved index and checklist first, reconcile them with current files and evidence, and continue unfinished work. When a change invalidates earlier validation or approval, reopen the affected tasks and record the prior baseline in change history. Add the checklist when updating an older modular package; do not fabricate past completion evidence or rewrite legacy inputs during review-only work.
 
@@ -140,7 +144,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/artemis-designer/scripts/c
   --package "<agent-slug>-design"
 ```
 
-Use `PLUGIN_ROOT` in Codex or `CLAUDE_PLUGIN_ROOT` in Claude Code for the installed plugin directory. If neither is available, resolve the script relative to this `SKILL.md`. The checker verifies package structure, metadata, links, identifiers, manifest consistency, wave alignment, traceability, and checklist consistency. Checklist warnings cover missing stages, invalid states, absent completion evidence/rationale, and finalization with unfinished tasks; they do not verify evidence truth, approval authority, or semantic coverage. It remains advisory and never replaces semantic review.
+Use `PLUGIN_ROOT` in Codex or `CLAUDE_PLUGIN_ROOT` in Claude Code for the installed plugin directory. If neither is available, resolve the script relative to this `SKILL.md`. The checker verifies package structure, metadata, links, identifiers, manifest consistency, wave alignment, traceability, and checklist consistency. It also checks brief governance, required business tables and Wave 1 sample/field presence. Checklist warnings cover missing stages, invalid states, absent completion evidence/rationale, and finalization with unfinished tasks. These checks do not verify evidence truth, approval authority, use-case goal quality, one-page rendered layout, sample fidelity or semantic coverage. They remain advisory and never replace semantic review.
 
 ## Prepare the implementation handoff
 

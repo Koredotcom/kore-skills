@@ -10,6 +10,24 @@ Use this structure for `00-design-index.md`:
 <!-- kore-agent-design:index:v2 -->
 # Agent Design Index: <Agent Name>
 
+## Status Legend
+
+| Term | Plain meaning |
+|---|---|
+| Confirmed | Supported by supplied evidence or an explicit answer; scope approval is recorded separately. |
+| Documented capability | Product documentation or environment evidence supports this capability. |
+| Proposed | A recommendation awaiting a decision. |
+| Assumption | A working belief that still needs confirmation. |
+| TBD | An answer or decision is still needed. |
+| Not verifiable | The evidence needed to check this is unavailable. |
+| Not applicable | This does not apply, with a stated reason. |
+
+Document status: **Working Draft** means being written; **In Review** means awaiting review; **Approved** means accepted for the recorded scope/version; **Superseded** means replaced. Checklist status: **Pending** means not started; **In progress** means underway; **Blocked** means unable to proceed; **Complete** means finished with evidence; **Deferred** means explicitly moved outside this cycle with a follow-up; **Not applicable** means irrelevant with a reason. These describe different things; a confirmed fact does not approve a whole document.
+
+## Reading Map
+
+Start with the [Executive brief](00-business-brief.md). Business reviewers read the use-case and experience files assigned in the Sign-off Matrix. Technical reviewers read their assigned technical files. The coordinator reconciles the whole package; each reviewer reads only the files they sign.
+
 ## Document Metadata
 
 | Field | Value |
@@ -47,7 +65,22 @@ Use this structure for `00-design-index.md`:
 
 | Document ID | Document | Type | Version | Status | Wave | Canonical ownership |
 |---|---|---|---|---|---|---|
+| <allocated DOC ID> | [Executive brief](00-business-brief.md) | Executive Brief | 0.1 | Working Draft | All | Derived summary; owner: <business owner> |
 | DOC-001 | [Agent Definition](01-agent-definition.md) | Agent Definition | 0.1 | Working Draft | All | Shared agent behavior |
+
+## Kickoff decisions and customer actions
+
+| Decision or access item | Customer owner | Needed-by date | What it blocks | Status | Canonical evidence / next action |
+|---|---|---|---|---|---|
+
+<Include every outstanding customer decision or access prerequisite, including measurement facts, scope decisions and environment/API access. Link to its canonical open question or dependency. Use an actual date when known; otherwise TBD with an action to agree it. Never infer a customer owner, date or completion. If none remain, state None with evidence.>
+
+## Sign-off Matrix
+
+| File | Version | Review area | Reviewer / customer role | Status | Decision evidence / date | Next action |
+|---|---|---|---|---|---|---|
+
+<One row per file and reviewer assignment. Business signs each use-case and experience file; technical signs each technical file. Assign the brief and shared agent definition to the business owner, and the index/review to the design coordinator. Use Pending, In review, Approved, Changes requested, or Not applicable with rationale. Record actual decision evidence, date and version; do not infer sign-off from scope approval or file creation.>
 
 ## Foundation Register
 
@@ -62,13 +95,15 @@ Use this structure for `00-design-index.md`:
 | Task | Stage | Scope | Status | Evidence or rationale | Next action / owner | Updated |
 |---|---|---|---|---|---|---|
 | Confirm source inventory and scope | Discovery | <source and scope references> | Pending | <known evidence or gap> | <next action and owner> | <YYYY-MM-DD> |
+| Draft executive brief | Draft | 00-business-brief.md | Pending | <canonical facts summarized> | <next action and owner> | <YYYY-MM-DD> |
+| Resolve kickoff decisions and customer actions | Discovery | <kickoff table items and outcomes> | Pending | <known decisions, owners and dates> | <next action and owner> | <YYYY-MM-DD> |
 | Draft shared behavior | Draft | <agent-definition path; link once created> | Pending | <evidence when drafted> | <next action and owner> | <YYYY-MM-DD> |
 | Check package structure | Validation | <current package revision> | Pending | <dated check result and warning dispositions> | <next action and owner> | <YYYY-MM-DD> |
 | Review design substance and traceability | Validation | <scoped files and versions> | Pending | <semantic findings and resolutions> | <next action and owner> | <YYYY-MM-DD> |
 | Confirm design decisions and baseline | Approval | <scoped files and versions> | Pending | <actual confirmation reference, actor, date and scope> | <next action and owner> | <YYYY-MM-DD> |
 | Finalize scoped design package | Finalization | <finalization scope> | Pending | <gate evidence and final verdict> | <next action and owner> | <YYYY-MM-DD> |
 
-<Expand Draft tasks for each use case, applicable experience modality and technical document. Track validation and approval coverage separately; grouped tasks must enumerate their covered files and versions.>
+<Expand Draft tasks for each use case (including both Wave 1 samples), applicable experience modality and technical document. Validation covers the brief, metrics, use-case goal tests, conversations, kickoff items and sign-off coverage. Track validation and approval coverage separately; approval tasks link the Sign-off Matrix, and grouped tasks enumerate their covered files and versions.>
 
 ## Use-Case Prioritization
 
@@ -140,6 +175,9 @@ Use this structure for `00-design-index.md`:
 - Update the traceability summary after material functional or technical changes.
 - Keep the experience decision summary synchronized with applicable voice and digital files; do not treat a user's confirmation of design recommendations as customer approval of the scope baseline.
 - Record only a concise readiness snapshot; keep detailed findings in `reviews/design-review.md`.
+- Present the executive brief first in the register and reading order. Its allocated document ID and governance fields belong here only; all other files retain their own metadata. Refresh the brief with changes to its canonical sources.
+- Maintain kickoff actions and file-scoped sign-offs with every material decision. Each reviewer reads only the files they sign; the coordinator owns cross-file consistency and routes changes to affected reviewers. A reviewer can sign multiple explicitly assigned files. Do not make business readers approve technical contracts or require technical reviewers to sign business behavior by default.
+- Keep sign-off separate from requested scope: a draft-only assignment may mark approval Not applicable with that boundary, while approved/finalized deliverables require the actual assigned decisions. Reopen affected sign-offs and approval tasks on material changes; retain earlier evidence in change history.
 
 ## Active checklist lifecycle
 
@@ -147,7 +185,7 @@ The Design Completion Checklist is the persistent work record for the current de
 
 - Use stages `Discovery`, `Draft`, `Validation`, `Approval`, and `Finalization`. Include all stages from the start, even when work has not reached them. For a partial design assignment, state its bounded finalization scope; do not imply the entire implementation design is complete.
 - Use statuses `Pending`, `In progress`, `Blocked`, `Complete`, `Deferred`, or `Not applicable`. Every row needs a specific task, scope, next action/owner, and last-updated date. For a closed row, the next-action cell may say `None — <accountable owner>`.
-- Create one drafting task for the agent definition, each identified use case (including later-wave skeletons), each applicable experience modality, and each required technical document. Add tasks as scope becomes known. Planned paths remain plain text until files exist; then use relative links. The document register still lists only existing documents.
+- Create one drafting task for the executive brief, agent definition, each identified use case (including later-wave skeletons), each applicable experience modality, and each required technical document. Track the two sample conversations within each Wave 1 use-case task, and track customer kickoff actions through resolution. Add tasks as scope becomes known. Planned paths remain plain text until files exist; then use relative links. The document register still lists only existing documents.
 - Track structural checks and semantic review separately. Record the checked revision or file versions, date, result, and disposition of warnings/findings. A passing checker alone does not complete semantic review or prove approval. Keep detailed findings in the review file and link them.
 - Keep approval tasks separate from drafting and validation, with the actual confirmation source, actor, date and covered scope/version. Reuse existing valid confirmations; do not introduce an extra approval ceremony. If approval is not part of the requested deliverable, mark it `Not applicable` with that boundary and label the output accordingly. Never label such a draft customer-approved.
 - `Complete` requires evidence of the task's outcome. `Deferred` needs a reason, agreed scope/wave disposition and a follow-up action/owner; `Not applicable` needs a reason. Missing information or unavailable checks remain `Pending` or `Blocked`, not `Complete`. Do not defer an unresolved blocker merely to finalize.

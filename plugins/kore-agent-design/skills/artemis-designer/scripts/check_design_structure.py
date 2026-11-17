@@ -78,6 +78,7 @@ REQUIRED_METADATA = [
     "last updated",
 ]
 CATEGORY_TYPES = {
+    "executive-brief": "Executive Brief",
     "index": "Design Index",
     "agent-definition": "Agent Definition",
     "use-case": "Use Case",
@@ -306,18 +307,37 @@ def definition_token_occurrences(text: str, category: str, metadata: dict[str, s
 def inspect_modular_document(path: Path, package: Path) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
     marker = MARKER_RE.search(text)
-    category = marker.group(1) if marker else "unrecognized"
+    is_brief = path.relative_to(package).as_posix() == "00-business-brief.md"
+    category = "executive-brief" if is_brief else marker.group(1) if marker else "unrecognized"
     warnings: list[str] = []
-    if marker is None:
+    if is_brief:
+        if ID_ANY_DIGITS_RE.search(text):
+            warnings.append("Executive brief must contain no IDs; keep governance in the index")
+        if marker or first_table_in_section(text, "Document Metadata"):
+            warnings.append("Executive brief must not contain a category marker or metadata block")
+        if len(text.split()) > 550:
+            warnings.append("Executive brief exceeds the one-page writing budget; shorten and verify export layout")
+    elif marker is None:
         warnings.append("Missing modular v2 category marker")
     elif category not in CATEGORY_TYPES:
         warnings.append(f"Unknown document category: {category}")
 
     metadata_table = first_table_in_section(text, "Document Metadata")
     metadata = normalize_metadata(metadata_table[1]) if metadata_table else {}
-    if not metadata_table:
+    if is_brief:
+        # The brief deliberately contains no IDs. Its governance comes only
+        # from the index; expose that source explicitly in the report.
+        index_path = package / "00-design-index.md"
+        index_text = index_path.read_text(encoding="utf-8") if index_path.is_file() else ""
+        rows = rows_by_normalized_header(first_table_in_section(index_text, "Document Register"))
+        row = next((row for row in rows if Path(markdown_link_target(row.get("document", "")) or "").as_posix() == "00-business-brief.md"), {})
+        metadata = {key: row.get(key, "") for key in ("document id", "version", "status", "wave")}
+        metadata["document type"] = row.get("type", "")
+        metadata["canonical owner for"] = row.get("canonical ownership", "")
+    elif not metadata_table:
         warnings.append("Missing Document Metadata table")
-    missing_metadata = [field for field in REQUIRED_METADATA if not metadata.get(field)]
+    required = ("document id", "document type", "version", "status", "wave", "canonical owner for") if is_brief else REQUIRED_METADATA
+    missing_metadata = [field for field in required if not metadata.get(field)]
     if missing_metadata:
         warnings.append("Missing metadata fields: " + ", ".join(missing_metadata))
 
@@ -370,6 +390,8 @@ def inspect_modular_document(path: Path, package: Path) -> dict[str, Any]:
         )
     definitions = set(definition_occurrences)
     identifiers = id_tokens(text)
+    if is_brief:
+        identifiers.update(definitions)
     malformed = malformed_id_tokens(text)
     if malformed:
         warnings.append("Identifiers do not use three digits: " + ", ".join(sorted(malformed)))
@@ -378,6 +400,7 @@ def inspect_modular_document(path: Path, package: Path) -> dict[str, Any]:
         "path": path.relative_to(package).as_posix(),
         "category": category,
         "metadata": metadata,
+        **({"metadataSource": "00-design-index.md#document-register"} if is_brief else {}),
         "status": "WARN" if warnings else "PASS",
         "warnings": warnings,
         "identifiers": sorted(identifiers),
@@ -732,6 +755,56 @@ def validate_checklist(documents: list[dict[str, Any]]) -> list[str]:
     return warnings
 
 
+def validate_business_structure(documents: list[dict[str, Any]]) -> list[str]:
+    """Advisory presence checks; goal quality, evidence and approvals need review."""
+    warnings: list[str] = []
+    if not any(doc["path"] == "00-business-brief.md" for doc in documents):
+        warnings.append("Missing first-file executive brief: 00-business-brief.md")
+    index = next((doc for doc in documents if doc["path"] == "00-design-index.md"), None)
+    if index:
+        if not section_text(index["text"], "Status Legend").strip():
+            warnings.append("Index has no plain-language Status Legend")
+        for heading, columns in (
+            ("Kickoff decisions and customer actions", ("decision or access item", "customer owner", "needed-by date", "what it blocks")),
+            ("Sign-off Matrix", ("file", "version", "review area", "reviewer / customer role", "status", "decision evidence / date", "next action")),
+        ):
+            table = first_table_in_section(index["text"], heading)
+            if not table:
+                warnings.append(f"Index has no {heading} table")
+                continue
+            headers = {header.lower() for header in table[0]}
+            missing = sorted(set(columns) - headers)
+            if missing:
+                warnings.append(f"{heading} missing columns: {', '.join(missing)}")
+            for number, row in enumerate(rows_by_normalized_header(table), 1):
+                empty = [column for column in columns if not row.get(column)]
+                if empty:
+                    warnings.append(f"{heading} row {number} has empty fields: {', '.join(empty)}")
+    for doc in documents:
+        if doc["category"] == "agent-definition":
+            rows = rows_by_normalized_header(first_table_in_section(doc["text"], "Purpose and Business Outcomes"))
+            if not rows:
+                warnings.append(f"{doc['path']} has no business outcome measurement rows")
+            for number, row in enumerate(rows, 1):
+                missing = [field for field in ("business outcome", "baseline", "target", "measurement source") if not row.get(field)]
+                if missing:
+                    warnings.append(f"{doc['path']} outcome row {number} missing: {', '.join(missing)}")
+        if doc["category"] != "use-case" or doc["metadata"].get("wave") != "Wave 1":
+            continue
+        scope = section_text(doc["text"], "Outcome and Scope")
+        for field in ("Trigger", "Actors", "Preconditions"):
+            if not re.search(rf"^\*\*{field}:\*\*[ \t]*\S.*$", scope, re.MULTILINE):
+                warnings.append(f"{doc['path']} missing required {field} field")
+        samples = section_text(doc["text"], "Sample Conversations")
+        for label in ("Happy path", "Failure path"):
+            match = re.search(rf"^### {label}\s*\n(.*?)(?=^### |\Z)", samples, re.MULTILINE | re.DOTALL | re.IGNORECASE)
+            tables = parse_tables(match.group(1)) if match else []
+            rows = rows_by_normalized_header(tables[0]) if tables else []
+            if len(rows) < 2 or any(not row.get("speaker") or not row.get("message") for row in rows):
+                warnings.append(f"{doc['path']} needs a {label} Speaker/Message sample with at least two populated turns")
+    return warnings
+
+
 def inspect_package(package: Path) -> dict[str, Any]:
     if not package.is_dir():
         raise OSError(f"package directory not found: {package}")
@@ -748,6 +821,7 @@ def inspect_package(package: Path) -> dict[str, Any]:
         warnings.append("Missing required 01-agent-definition.md")
     warnings.extend(validate_manifest(package, documents))
     warnings.extend(validate_checklist(documents))
+    warnings.extend(validate_business_structure(documents))
     trace_warnings, trace_inventory = validate_traceability(documents)
     warnings.extend(trace_warnings)
     for doc in documents:
